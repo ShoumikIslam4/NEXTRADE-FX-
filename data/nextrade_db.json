@@ -129,6 +129,34 @@
       "kycStatus": "APPROVED",
       "createdAt": "2026-05-18T12:00:00Z",
       "updatedAt": "2026-11-13T14:15:38.583Z"
+    },
+    {
+      "id": "usr_c7290665-b13a-4aa0-8326-fd15b6a60ad3",
+      "fullName": "Md Shoumik Mia",
+      "email": "testreg_1794581134823@gmail.com",
+      "passwordHash": "$2b$12$wHYq5EPXm9ke7YWVM4wpWeDj1o8cRj1o2t9pqjfWPEEpVUf4re4pS",
+      "role": "USER",
+      "isEmailVerified": true,
+      "isActive": true,
+      "country": "Bangladesh",
+      "phone": "+880 1712-000000",
+      "kycStatus": "UNSUBMITTED",
+      "createdAt": "2026-11-13T14:45:35.455Z",
+      "updatedAt": "2026-11-13T14:45:35.455Z"
+    },
+    {
+      "id": "usr_6857066b-3f90-4438-a826-7642097af9f7",
+      "fullName": "Md Shoumik Mia",
+      "email": "verify_1794581305118@gmail.com",
+      "passwordHash": "$2b$10$BXl/4K4xfLhQG.eEaouKv.XprsUfRw8aeyr6dek1SoAiQN1gJn1w6",
+      "role": "USER",
+      "isEmailVerified": true,
+      "isActive": true,
+      "country": "Bangladesh",
+      "phone": "+880 1712-000000",
+      "kycStatus": "UNSUBMITTED",
+      "createdAt": "2026-11-13T14:48:25.280Z",
+      "updatedAt": "2026-11-13T14:48:25.280Z"
     }
   ],
   "staff": [
@@ -423,6 +451,22 @@
       "createdAt": "2026-11-13T14:15:46.321Z",
       "ipAddress": "127.0.0.1",
       "userAgent": "node"
+    },
+    {
+      "id": "34081527377520b90f260e07797f09ae7d6c149925416dece2cecaeef5978ff2",
+      "userId": "usr_c7290665-b13a-4aa0-8326-fd15b6a60ad3",
+      "expiresAt": 1797173135456,
+      "createdAt": "2026-11-13T14:45:35.456Z",
+      "ipAddress": "127.0.0.1",
+      "userAgent": "node"
+    },
+    {
+      "id": "3426a04f2a6e394e229260fd955db05527e6c6ba282d68b568f1349f29567eb2",
+      "userId": "usr_6857066b-3f90-4438-a826-7642097af9f7",
+      "expiresAt": 1797173305280,
+      "createdAt": "2026-11-13T14:48:25.281Z",
+      "ipAddress": "127.0.0.1",
+      "userAgent": "node"
     }
   ],
   "depositRequests": [],
@@ -593,6 +637,46 @@
       "isPrimary": true,
       "status": "ACTIVE",
       "createdAt": "2026-11-12T06:40:37.118Z"
+    },
+    {
+      "id": "acc_0bad23c2-3c8c-419f-b1ae-cf1a8089c061",
+      "userId": "usr_c7290665-b13a-4aa0-8326-fd15b6a60ad3",
+      "accountNumber": "NX-DEMO-907890",
+      "mode": "DEMO",
+      "type": "Raw ECN Demo",
+      "server": "NEXTRADE-Demo-01",
+      "leverage": "1:500",
+      "currency": "USD",
+      "initialBalance": 1000,
+      "balance": 1000,
+      "equity": 1000,
+      "margin": 0,
+      "freeMargin": 1000,
+      "marginLevel": 0,
+      "floatingProfit": 0,
+      "isPrimary": true,
+      "status": "ACTIVE",
+      "createdAt": "2026-11-13T14:45:35.455Z"
+    },
+    {
+      "id": "acc_80730c66-f331-4e95-85d1-423dae187b72",
+      "userId": "usr_6857066b-3f90-4438-a826-7642097af9f7",
+      "accountNumber": "NX-DEMO-334492",
+      "mode": "DEMO",
+      "type": "Raw ECN Demo",
+      "server": "NEXTRADE-Demo-01",
+      "leverage": "1:500",
+      "currency": "USD",
+      "initialBalance": 1000,
+      "balance": 1000,
+      "equity": 1000,
+      "margin": 0,
+      "freeMargin": 1000,
+      "marginLevel": 0,
+      "floatingProfit": 0,
+      "isPrimary": true,
+      "status": "ACTIVE",
+      "createdAt": "2026-11-13T14:48:25.280Z"
     }
   ],
   "bdtRatePerUSD": 122.5

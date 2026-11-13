@@ -66,7 +66,7 @@ router.post('/auth/register', rateLimit(10, 10 * 60 * 1000), (req: Request, res:
       return;
     }
 
-    const salt = bcrypt.genSaltSync(12);
+    const salt = bcrypt.genSaltSync(10);
     const passwordHash = bcrypt.hashSync(password, salt);
 
     const newUser = db.createUser({

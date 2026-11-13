@@ -92,6 +92,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const parseJsonSafe = async (res: Response): Promise<any> => {
+    const text = await res.text();
+    if (!text) return null;
+    try {
+      return JSON.parse(text);
+    } catch {
+      return null;
+    }
+  };
+
   // Check current session from /api/auth/me on initial load and keep it synced
   const refreshUser = useCallback(async () => {
     try {
@@ -107,8 +117,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.user) {
+        const data = await parseJsonSafe(res);
+        if (data?.success && data.user) {
           saveUserState(data.user);
           if (data.bdtRate) {
             setBdtRate(data.bdtRate);
@@ -144,13 +154,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         credentials: 'include',
         body: JSON.stringify({ email, password, rememberMe })
       });
-      const data = await res.json();
-      if (res.ok && data.success) {
+      const data = await parseJsonSafe(res);
+      if (res.ok && data?.success) {
         saveUserState(data.user, data.token);
         refreshUser();
         return { success: true, message: data.message, role: data.user.role };
       }
-      return { success: false, message: data.message || 'Login failed. Invalid credentials.' };
+      return {
+        success: false,
+        message: data?.message || `Login failed (HTTP ${res.status}). Please try again.`
+      };
     } catch (err) {
       return { success: false, message: 'Network error or server unavailable. Please try again.' };
     }
@@ -164,14 +177,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         credentials: 'include',
         body: JSON.stringify({ fullName, email, password, confirmPassword, phone })
       });
-      const data = await res.json();
-      if (res.ok && data.success) {
+      const data = await parseJsonSafe(res);
+      if (res.ok && data?.success) {
         saveUserState(data.user, data.token);
         return { success: true, message: data.message };
       }
-      return { success: false, message: data.message || 'Registration failed.' };
+      return {
+        success: false,
+        message: data?.message || `Registration failed (HTTP ${res.status}). Please ensure the backend API is deployed and reachable.`
+      };
     } catch (err) {
-      return { success: false, message: 'Network error during registration.' };
+      return { success: false, message: 'Network error during registration. Could not reach authentication server.' };
     }
   };
 
