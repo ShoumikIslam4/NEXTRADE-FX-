@@ -2,6 +2,15 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Global mobile viewport containment: never allow horizontal scroll or off-canvas drift */
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: clip;
+  background-color: #0B1220;
+}
+
 /* ==========================================================================
    NEXTRADE FX - Institutional Light Theme System
    Designed for maximum legibility, financial clarity, and high-contrast elegance
@@ -9,6 +18,7 @@
 
 html.light {
   color-scheme: light;
+  background-color: #f8fafc !important;
 }
 
 /* 1. Global Viewport Canvas */

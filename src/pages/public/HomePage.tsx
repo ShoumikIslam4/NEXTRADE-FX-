@@ -15,42 +15,42 @@ export const HomePage: React.FC = () => {
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
 
   return (
-    <div className="space-y-24 pb-20">
+    <div className="w-full overflow-x-clip space-y-14 sm:space-y-20 lg:space-y-24 pb-16 sm:pb-20">
       {/* 1. HERO SECTION */}
-      <section className="relative pt-8 sm:pt-12 md:pt-16 overflow-hidden">
+      <section className="relative pt-6 sm:pt-12 md:pt-16 overflow-hidden">
         {/* Ambient background glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-blue-600/10 blur-[130px] pointer-events-none -z-10" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[800px] h-[350px] bg-blue-600/10 blur-[130px] pointer-events-none -z-10" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Transparent Notice Banner */}
-          <div className="mb-6 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-300 text-[11px] font-medium">
+          <div className="mb-5 sm:mb-6 inline-flex max-w-full flex-wrap items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-xl sm:rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-300 text-[10px] sm:text-[11px] font-medium leading-snug">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
             <span>Simulated FinTech Platform · 100% Virtual Capital · Zero Financial Risk</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* Left Copy */}
-            <div className="lg:col-span-7 space-y-6">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+            <div className="lg:col-span-7 space-y-5 sm:space-y-6 min-w-0">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs text-slate-400">
                 <span className="font-semibold text-blue-400">Simulated Trading Infrastructure</span>
                 <span className="text-slate-600">·</span>
                 <span>Virtual Order Matching Engine</span>
-                <span className="text-slate-600">·</span>
-                <span>Educational Sandbox</span>
+                <span className="text-slate-600 hidden sm:inline">·</span>
+                <span className="hidden sm:inline">Educational Sandbox</span>
               </div>
 
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-[1.15] text-balance">
-                Practice Forex & CFDs With <span className="text-blue-500">Simulated</span> Institutional Precision
+              <h1 className="text-[26px] sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-[1.15] text-balance break-words">
+                Practice Forex &amp; CFDs With <span className="text-blue-500">Simulated</span> Institutional Precision
               </h1>
 
-              <p className="text-sm sm:text-base lg:text-lg text-slate-300 leading-relaxed max-w-xl text-balance">
+              <p className="text-xs sm:text-base lg:text-lg text-slate-300 leading-relaxed max-w-xl text-balance">
                 Experience simulated spreads from 0.0 pips, virtual order books, and simulated trade execution in our high-performance sandbox environment. No real funds required, 100% demo capital.
               </p>
 
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
                 <Link
                   to="/register"
-                  className="px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-xs sm:text-sm transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 text-center"
+                  className="px-5 sm:px-6 py-3 sm:py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-xs sm:text-sm transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 text-center"
                 >
                   <Terminal className="w-4 h-4 shrink-0" />
                   <span>Open Free Demo Account</span>
@@ -58,7 +58,7 @@ export const HomePage: React.FC = () => {
 
                 <Link
                   to="/account-types"
-                  className="px-6 py-3.5 bg-[#151F30] hover:bg-slate-800 text-slate-200 border border-slate-700 hover:border-slate-600 font-bold rounded-lg text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 text-center"
+                  className="px-5 sm:px-6 py-3 sm:py-3.5 bg-[#151F30] hover:bg-slate-800 text-slate-200 border border-slate-700 hover:border-slate-600 font-bold rounded-lg text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 text-center"
                 >
                   <span>Explore Demo Account Tiers</span>
                   <ArrowRight className="w-4 h-4 shrink-0" />
@@ -66,18 +66,18 @@ export const HomePage: React.FC = () => {
               </div>
 
               {/* Trust Indicators */}
-              <div className="grid grid-cols-3 gap-3 sm:gap-6 pt-6 border-t border-slate-800/80 text-xs">
+              <div className="grid grid-cols-3 gap-2 sm:gap-6 pt-5 sm:pt-6 border-t border-slate-800/80 text-xs">
                 <div>
-                  <div className="text-xl sm:text-2xl font-black font-mono text-white">0.0<span className="text-blue-500 text-sm">p</span></div>
-                  <div className="text-slate-400 mt-0.5 text-[11px] sm:text-xs">Simulated Spreads from</div>
+                  <div className="text-lg sm:text-2xl font-black font-mono text-white">0.0<span className="text-blue-500 text-xs sm:text-sm">p</span></div>
+                  <div className="text-slate-400 mt-0.5 text-[10px] sm:text-xs leading-tight">Simulated Spreads</div>
                 </div>
                 <div>
-                  <div className="text-xl sm:text-2xl font-black font-mono text-white">1:500</div>
-                  <div className="text-slate-400 mt-0.5 text-[11px] sm:text-xs">Simulated Leverage</div>
+                  <div className="text-lg sm:text-2xl font-black font-mono text-white">1:500</div>
+                  <div className="text-slate-400 mt-0.5 text-[10px] sm:text-xs leading-tight">Simulated Leverage</div>
                 </div>
                 <div>
-                  <div className="text-xl sm:text-2xl font-black font-mono text-white">&lt;12<span className="text-emerald-500 text-sm">ms</span></div>
-                  <div className="text-slate-400 mt-0.5 text-[11px] sm:text-xs">Engine Latency</div>
+                  <div className="text-lg sm:text-2xl font-black font-mono text-white">&lt;12<span className="text-emerald-500 text-xs sm:text-sm">ms</span></div>
+                  <div className="text-slate-400 mt-0.5 text-[10px] sm:text-xs leading-tight">Engine Latency</div>
                 </div>
               </div>
             </div>
@@ -110,9 +110,9 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* 2. LIVE MARKET OVERVIEW TICKER STRIP */}
-      <section className="border-y border-slate-800 bg-[#0F172A]/70 py-4">
+      <section className="w-full overflow-hidden border-y border-slate-800 bg-[#0F172A]/70 py-3.5 sm:py-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 overflow-x-auto">
-          <div className="flex items-center gap-4 sm:gap-6 min-w-max text-xs font-mono tabular-nums">
+          <div className="flex items-center gap-3 sm:gap-6 min-w-max text-xs font-mono tabular-nums">
             <span className="text-slate-500 font-sans font-semibold text-[11px] uppercase tracking-wider shrink-0">
               Simulated Market Quotes:
             </span>
@@ -427,10 +427,10 @@ export const HomePage: React.FC = () => {
           <div className="pt-2">
             <Link
               to="/register"
-              className="px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-xs sm:text-sm transition-all shadow-xl shadow-blue-500/25 inline-flex items-center gap-2"
+              className="w-full sm:w-auto px-6 sm:px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-xs sm:text-sm transition-all shadow-xl shadow-blue-500/25 inline-flex items-center justify-center gap-2"
             >
               <span>Create Practice Account ($1,000 USD)</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 shrink-0" />
             </Link>
           </div>
         </div>

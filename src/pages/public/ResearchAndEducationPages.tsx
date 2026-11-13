@@ -14,21 +14,21 @@ export const PublicEconomicCalendarPage: React.FC = () => {
   const filtered = MOCK_ECONOMIC_EVENTS.filter(e => impactFilter === 'all' || e.impact === impactFilter);
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 sm:space-y-8">
       <div className="max-w-2xl space-y-2">
         <div className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Macro Intelligence</div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Live Economic Calendar</h1>
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-white">Live Economic Calendar</h1>
         <p className="text-sm text-slate-400">
           Track macroeconomic data releases, central bank speeches, and global consensus figures that drive forex volatility.
         </p>
       </div>
 
-      <div className="flex items-center gap-1 bg-[#111827] p-1.5 rounded-xl border border-slate-800 text-xs w-fit">
+      <div className="flex flex-wrap items-center gap-1 bg-[#111827] p-1.5 rounded-xl border border-slate-800 text-xs w-full sm:w-fit">
         {(['all', 'high', 'medium', 'low'] as const).map(imp => (
           <button
             key={imp}
             onClick={() => setImpactFilter(imp)}
-            className={`px-3.5 py-1.5 rounded-lg font-semibold capitalize transition-colors ${
+            className={`px-3 py-1.5 rounded-lg font-semibold capitalize transition-colors ${
               impactFilter === imp ? 'bg-blue-600 text-white font-bold' : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -83,7 +83,7 @@ export const PublicEconomicCalendarPage: React.FC = () => {
 
 export const PublicNewsPage: React.FC = () => {
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 sm:space-y-8">
       <div className="max-w-2xl space-y-2">
         <div className="text-xs font-semibold text-blue-400 uppercase tracking-wider">News Desk</div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Global Macro & FX News</h1>
@@ -119,7 +119,7 @@ export const PublicNewsPage: React.FC = () => {
 
 export const PublicAnalysisPage: React.FC = () => {
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 sm:space-y-8">
       <div className="max-w-2xl space-y-2">
         <div className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Technical Research</div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Institutional Market Analysis</h1>
@@ -171,7 +171,7 @@ export const PublicAnalysisPage: React.FC = () => {
 
 export const PublicSignalsPage: React.FC = () => {
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 sm:space-y-8">
       <div className="max-w-2xl space-y-2">
         <div className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Trading Intelligence</div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Algorithmic Trading Signals</h1>
@@ -231,7 +231,7 @@ export const PublicSignalsPage: React.FC = () => {
 
 export const PublicEducationPage: React.FC = () => {
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 sm:space-y-8">
       <div className="max-w-2xl space-y-2">
         <div className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Trading Academy</div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Forex Education Curriculum</h1>

@@ -437,13 +437,13 @@ export const ForgotPasswordPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto px-6 py-16 space-y-6">
+    <div className="max-w-md mx-auto px-4 sm:px-6 py-10 sm:py-16 space-y-6">
       <div className="text-center space-y-2">
         <h1 className="text-2xl font-extrabold text-white">Reset Account Password</h1>
         <p className="text-xs text-slate-400">Enter your registered email address to receive password recovery instructions.</p>
       </div>
 
-      <div className="bg-[#111827] border border-slate-800 rounded-2xl p-6 space-y-4 text-xs">
+      <div className="bg-[#111827] border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4 text-xs">
         {submitted ? (
           <div className="text-center space-y-3 py-4">
             <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
@@ -487,7 +487,7 @@ export const ForgotPasswordPage: React.FC = () => {
 
 export const PrivacyPolicyPage: React.FC = () => {
   return (
-    <div className="max-w-3xl mx-auto px-6 py-12 space-y-6 text-xs text-slate-300 leading-relaxed">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 text-xs text-slate-300 leading-relaxed">
       <h1 className="text-3xl font-extrabold text-white">Privacy Policy</h1>
       <p className="text-slate-400">Effective Date: November 2026</p>
       
@@ -506,7 +506,7 @@ export const PrivacyPolicyPage: React.FC = () => {
 
 export const TermsPage: React.FC = () => {
   return (
-    <div className="max-w-3xl mx-auto px-6 py-12 space-y-6 text-xs text-slate-300 leading-relaxed">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 text-xs text-slate-300 leading-relaxed">
       <h1 className="text-3xl font-extrabold text-white">Terms & Conditions</h1>
       <p className="text-slate-400">Effective Date: November 2026</p>
 
@@ -525,7 +525,7 @@ export const TermsPage: React.FC = () => {
 
 export const RiskDisclosurePage: React.FC = () => {
   return (
-    <div className="max-w-3xl mx-auto px-6 py-12 space-y-6 text-xs text-slate-300 leading-relaxed">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 text-xs text-slate-300 leading-relaxed">
       <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 flex items-start gap-3">
         <ShieldAlert className="w-5 h-5 shrink-0 mt-0.5" />
         <div>

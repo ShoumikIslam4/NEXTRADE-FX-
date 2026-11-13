@@ -45,7 +45,8 @@ export const TradingMonitorPage: React.FC = () => {
         <div className="p-4 border-b border-slate-800">
           <h3 className="text-sm font-bold text-white">Asset Class Exposure Breakdown</h3>
         </div>
-        <table className="w-full text-left text-xs tabular-nums font-mono">
+        <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs tabular-nums font-mono min-w-[600px]">
           <thead className="bg-[#0B1220] text-slate-400 font-sans border-b border-slate-800">
             <tr>
               <th className="py-3 px-4">Instrument</th>
@@ -79,6 +80,7 @@ export const TradingMonitorPage: React.FC = () => {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
@@ -95,7 +97,8 @@ export const OrdersManagementPage: React.FC = () => {
       </div>
 
       <div className="bg-[#111827] border border-slate-800 rounded-xl overflow-hidden">
-        <table className="w-full text-left text-xs tabular-nums font-mono">
+        <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs tabular-nums font-mono min-w-[700px]">
           <thead className="bg-[#0B1220] text-slate-400 font-sans border-b border-slate-800">
             <tr>
               <th className="py-3 px-4">Order ID</th>
@@ -132,6 +135,7 @@ export const OrdersManagementPage: React.FC = () => {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
@@ -148,7 +152,8 @@ export const AdminPositionsPage: React.FC = () => {
       </div>
 
       <div className="bg-[#111827] border border-slate-800 rounded-xl overflow-hidden">
-        <table className="w-full text-left text-xs tabular-nums font-mono">
+        <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs tabular-nums font-mono min-w-[780px]">
           <thead className="bg-[#0B1220] text-slate-400 font-sans border-b border-slate-800">
             <tr>
               <th className="py-3 px-4">Position Ticket</th>
@@ -189,6 +194,7 @@ export const AdminPositionsPage: React.FC = () => {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
@@ -205,7 +211,8 @@ export const AdminTransactionsPage: React.FC = () => {
       </div>
 
       <div className="bg-[#111827] border border-slate-800 rounded-xl overflow-hidden">
-        <table className="w-full text-left text-xs tabular-nums font-mono">
+        <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs tabular-nums font-mono min-w-[680px]">
           <thead className="bg-[#0B1220] text-slate-400 font-sans border-b border-slate-800">
             <tr>
               <th className="py-3 px-4">TX ID</th>
@@ -237,6 +244,7 @@ export const AdminTransactionsPage: React.FC = () => {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
@@ -641,7 +649,8 @@ export const AdminWithdrawalsPage: React.FC = () => {
       </div>
 
       <div className="bg-[#111827] border border-slate-800 rounded-xl overflow-hidden">
-        <table className="w-full text-left text-xs tabular-nums font-mono">
+        <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs tabular-nums font-mono min-w-[740px]">
           <thead className="bg-[#0B1220] text-slate-400 font-sans border-b border-slate-800">
             <tr>
               <th className="py-3 px-4">Request ID</th>
@@ -698,6 +707,7 @@ export const AdminWithdrawalsPage: React.FC = () => {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
@@ -767,7 +777,8 @@ export const PaymentMethodsPage: React.FC = () => {
       </div>
 
       <div className="bg-[#111827] border border-slate-800 rounded-xl overflow-hidden">
-        <table className="w-full text-left text-xs tabular-nums font-mono">
+        <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs tabular-nums font-mono min-w-[740px]">
           <thead className="bg-[#0B1220] text-slate-400 font-sans border-b border-slate-800">
             <tr>
               <th className="py-3 px-4">Gateway</th>
@@ -825,6 +836,7 @@ export const PaymentMethodsPage: React.FC = () => {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Edit Gateway Modal */}

@@ -815,9 +815,9 @@ export const ReportsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-6 bg-[#111827] border border-slate-800 rounded-xl space-y-4">
+      <div className="p-4 sm:p-6 bg-[#111827] border border-slate-800 rounded-xl space-y-4">
         <h3 className="text-sm font-bold text-white">Simulated Monthly P/L Distribution</h3>
-        <div className="grid grid-cols-6 sm:grid-cols-12 gap-2 text-center text-xs font-mono">
+        <div className="grid grid-cols-3 sm:grid-cols-6 lg:grid-cols-12 gap-2 text-center text-xs font-mono">
           {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((m, idx) => {
             const pnl = [2.4, 3.1, -1.2, 4.5, 1.8, -0.8, 3.9, 2.1, 4.2, 1.9, 2.8, 0.0][idx];
             return (

@@ -31,22 +31,22 @@ export const MarketsPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 sm:space-y-8">
       <div className="max-w-2xl space-y-2">
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Global Tradable Markets</h1>
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-white">Global Tradable Markets</h1>
         <p className="text-sm text-slate-400">
           Access institutional Forex majors, precious metals, commodities, and index CFDs with simulated raw spreads.
         </p>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-[#111827] border border-slate-800 rounded-xl">
-        <div className="flex items-center gap-1 bg-[#151F30] p-1 rounded-lg border border-slate-800 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 bg-[#111827] border border-slate-800 rounded-xl">
+        <div className="flex flex-wrap items-center gap-1 bg-[#151F30] p-1 rounded-lg border border-slate-800 text-xs w-full sm:w-auto">
           {(['all', 'forex', 'commodities', 'indices', 'crypto'] as const).map(cat => (
             <button
               key={cat}
               onClick={() => setFilter(cat)}
-              className={`px-3 py-1.5 rounded font-semibold capitalize transition-colors ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded font-semibold capitalize transition-colors ${
                 filter === cat ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -123,7 +123,7 @@ export const ForexPage: React.FC = () => {
   const forexPairs = pairs.filter(p => p.category === 'forex');
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 sm:space-y-8">
       <div className="max-w-2xl space-y-2">
         <div className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Currency Markets</div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Forex Majors, Minors & Crosses</h1>
@@ -183,7 +183,7 @@ export const CommoditiesPage: React.FC = () => {
   const commodities = pairs.filter(p => p.category === 'commodities');
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 sm:space-y-8">
       <div className="max-w-2xl space-y-2">
         <div className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Hard & Energy Assets</div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Precious Metals & Crude Oil CFDs</h1>
@@ -239,7 +239,7 @@ export const IndicesPage: React.FC = () => {
   const indices = pairs.filter(p => p.category === 'indices');
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 sm:space-y-8">
       <div className="max-w-2xl space-y-2">
         <div className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Equity Benchmarks</div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Global Stock Market Indices</h1>
@@ -291,7 +291,7 @@ export const IndicesPage: React.FC = () => {
 
 export const PricingPage: React.FC = () => {
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 sm:space-y-8">
       <div className="max-w-2xl space-y-2">
         <div className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Transparent Economics</div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Pricing, Spreads & Fees</h1>

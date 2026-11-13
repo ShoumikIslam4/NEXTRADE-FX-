@@ -21,11 +21,11 @@ export const PublicNavbar: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-[#0B1220]/95 backdrop-blur-md border-b border-slate-800 transition-colors">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 px-4 sm:px-6 py-3.5">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 py-3 sm:py-3.5">
         {/* Zone 1: Brand Wordmark */}
-        <Link to="/" className="flex items-center gap-2.5 text-lg font-bold tracking-tight text-white whitespace-nowrap shrink-0 group">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:bg-blue-500 transition-colors">
-            <TrendingUp className="w-4 h-4 stroke-[2.5]" />
+        <Link to="/" className="flex items-center gap-2 text-sm sm:text-lg font-bold tracking-tight text-white whitespace-nowrap shrink-0 group">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:bg-blue-500 transition-colors shrink-0">
+            <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
           </div>
           <span className="font-extrabold tracking-wider">NEXTRADE<span className="text-blue-500">FX</span></span>
         </Link>
@@ -120,11 +120,11 @@ export const PublicNavbar: React.FC = () => {
         </nav>
 
         {/* Zone 3: Auth & Action Area */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* Theme Toggle Button */}
           <button
             onClick={toggleTheme}
-            className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            className="p-1.5 sm:p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
             title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
             aria-label="Toggle Theme"
           >
@@ -132,22 +132,24 @@ export const PublicNavbar: React.FC = () => {
           </button>
 
           {isAuthenticated ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {isStaffOrAdmin ? (
                 <Link
                   to="/admin/overview"
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-500 rounded-lg transition-colors shadow-sm shadow-amber-600/30 whitespace-nowrap"
+                  className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold text-white bg-amber-600 hover:bg-amber-500 rounded-lg transition-colors shadow-sm shadow-amber-600/30 whitespace-nowrap"
                 >
                   <Shield className="w-3.5 h-3.5" />
-                  <span>Admin Portal</span>
+                  <span className="hidden sm:inline">Admin Portal</span>
+                  <span className="sm:hidden">Admin</span>
                 </Link>
               ) : (
                 <Link
                   to="/trader/overview"
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors shadow-sm shadow-blue-500/20 whitespace-nowrap"
+                  className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors shadow-sm shadow-blue-500/20 whitespace-nowrap"
                 >
                   <LayoutDashboard className="w-3.5 h-3.5" />
-                  <span>Trader Dashboard</span>
+                  <span className="hidden sm:inline">Trader Dashboard</span>
+                  <span className="sm:hidden">Dashboard</span>
                 </Link>
               )}
 
@@ -161,19 +163,21 @@ export const PublicNavbar: React.FC = () => {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <Link
                 to="/login"
-                className="text-xs font-semibold text-slate-300 hover:text-white px-3 py-2 transition-colors whitespace-nowrap"
+                className="text-[11px] sm:text-xs font-semibold text-slate-300 hover:text-white px-2 sm:px-3 py-1.5 sm:py-2 transition-colors whitespace-nowrap"
               >
-                Client Login
+                <span className="hidden sm:inline">Client Login</span>
+                <span className="sm:hidden">Login</span>
               </Link>
 
               <Link
                 to="/register"
-                className="px-3.5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors shadow-sm shadow-blue-500/20 whitespace-nowrap shrink-0"
+                className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors shadow-sm shadow-blue-500/20 whitespace-nowrap shrink-0"
               >
-                Create Account
+                <span className="hidden sm:inline">Create Account</span>
+                <span className="sm:hidden">Sign Up</span>
               </Link>
             </div>
           )}
@@ -181,7 +185,7 @@ export const PublicNavbar: React.FC = () => {
           {/* Mobile hamburger */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 text-slate-400 hover:text-white transition-colors"
+            className="lg:hidden p-1.5 sm:p-2 text-slate-400 hover:text-white transition-colors"
             aria-label="Toggle Navigation Menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}

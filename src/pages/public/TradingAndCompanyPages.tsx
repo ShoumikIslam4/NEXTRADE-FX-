@@ -118,64 +118,66 @@ export const PlatformsPage: React.FC = () => {
 
 export const AccountTypesPage: React.FC = () => {
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 space-y-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-12">
       <div className="max-w-2xl space-y-2">
         <div className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Trading Tiers</div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Demo Account Types & Features</h1>
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-white">Demo Account Types & Features</h1>
         <p className="text-sm text-slate-400">
           Compare simulated spreads, execution routing, and leverage caps across our tier matrix.
         </p>
       </div>
 
       <div className="bg-[#111827] border border-slate-800 rounded-xl overflow-hidden">
-        <table className="w-full text-left text-xs tabular-nums font-mono">
-          <thead className="bg-[#0B1220] text-slate-400 font-sans border-b border-slate-800">
-            <tr>
-              <th className="py-3 px-4">Feature / Specification</th>
-              <th className="py-3 px-4">Standard Demo</th>
-              <th className="py-3 px-4 text-blue-400 font-bold">Raw ECN Demo</th>
-              <th className="py-3 px-4 text-amber-400 font-bold">Institutional Pro</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-800/60 font-sans">
-            <tr>
-              <td className="py-3 px-4 font-bold text-slate-300">Spreads on EUR/USD</td>
-              <td className="py-3 px-4 font-mono text-white">From 0.8 pips</td>
-              <td className="py-3 px-4 font-mono text-emerald-400 font-bold">From 0.0 pips (Raw)</td>
-              <td className="py-3 px-4 font-mono text-emerald-400 font-bold">From 0.0 pips (Deep)</td>
-            </tr>
-            <tr>
-              <td className="py-3 px-4 font-bold text-slate-300">Commission</td>
-              <td className="py-3 px-4 font-mono text-emerald-400 font-bold">$0.00 (Zero)</td>
-              <td className="py-3 px-4 font-mono text-white">$3.50 / Lot per side</td>
-              <td className="py-3 px-4 font-mono text-white">$1.80 / Lot per side</td>
-            </tr>
-            <tr>
-              <td className="py-3 px-4 font-bold text-slate-300">Maximum Leverage</td>
-              <td className="py-3 px-4 font-mono text-white">1:500</td>
-              <td className="py-3 px-4 font-mono text-white">1:500</td>
-              <td className="py-3 px-4 font-mono text-white">1:500</td>
-            </tr>
-            <tr>
-              <td className="py-3 px-4 font-bold text-slate-300">Minimum Order Size</td>
-              <td className="py-3 px-4 font-mono text-white">0.01 micro-lots</td>
-              <td className="py-3 px-4 font-mono text-white">0.01 micro-lots</td>
-              <td className="py-3 px-4 font-mono text-white">0.10 mini-lots</td>
-            </tr>
-            <tr>
-              <td className="py-3 px-4 font-bold text-slate-300">Execution Server Location</td>
-              <td className="py-3 px-4 text-slate-400">Equinix LD4 (Simulated)</td>
-              <td className="py-3 px-4 text-slate-400">Equinix LD4 (Simulated)</td>
-              <td className="py-3 px-4 text-slate-400">Equinix LD4 & NY4 Dedicated</td>
-            </tr>
-            <tr>
-              <td className="py-3 px-4 font-bold text-slate-300">Initial Demo Balance</td>
-              <td className="py-3 px-4 font-mono text-white">$10,000 USD</td>
-              <td className="py-3 px-4 font-mono text-white">$50,000 USD</td>
-              <td className="py-3 px-4 font-mono text-white">$250,000 USD</td>
-            </tr>
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs tabular-nums font-mono min-w-[640px]">
+            <thead className="bg-[#0B1220] text-slate-400 font-sans border-b border-slate-800">
+              <tr>
+                <th className="py-3 px-4">Feature / Specification</th>
+                <th className="py-3 px-4">Standard Demo</th>
+                <th className="py-3 px-4 text-blue-400 font-bold">Raw ECN Demo</th>
+                <th className="py-3 px-4 text-amber-400 font-bold">Institutional Pro</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60 font-sans">
+              <tr>
+                <td className="py-3 px-4 font-bold text-slate-300">Spreads on EUR/USD</td>
+                <td className="py-3 px-4 font-mono text-white">From 0.8 pips</td>
+                <td className="py-3 px-4 font-mono text-emerald-400 font-bold">From 0.0 pips (Raw)</td>
+                <td className="py-3 px-4 font-mono text-emerald-400 font-bold">From 0.0 pips (Deep)</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4 font-bold text-slate-300">Commission</td>
+                <td className="py-3 px-4 font-mono text-emerald-400 font-bold">$0.00 (Zero)</td>
+                <td className="py-3 px-4 font-mono text-white">$3.50 / Lot per side</td>
+                <td className="py-3 px-4 font-mono text-white">$1.80 / Lot per side</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4 font-bold text-slate-300">Maximum Leverage</td>
+                <td className="py-3 px-4 font-mono text-white">1:500</td>
+                <td className="py-3 px-4 font-mono text-white">1:500</td>
+                <td className="py-3 px-4 font-mono text-white">1:500</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4 font-bold text-slate-300">Minimum Order Size</td>
+                <td className="py-3 px-4 font-mono text-white">0.01 micro-lots</td>
+                <td className="py-3 px-4 font-mono text-white">0.01 micro-lots</td>
+                <td className="py-3 px-4 font-mono text-white">0.10 mini-lots</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4 font-bold text-slate-300">Execution Server Location</td>
+                <td className="py-3 px-4 text-slate-400">Equinix LD4 (Simulated)</td>
+                <td className="py-3 px-4 text-slate-400">Equinix LD4 (Simulated)</td>
+                <td className="py-3 px-4 text-slate-400">Equinix LD4 & NY4 Dedicated</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4 font-bold text-slate-300">Initial Demo Balance</td>
+                <td className="py-3 px-4 font-mono text-white">$1,000 USD</td>
+                <td className="py-3 px-4 font-mono text-white">$1,000 USD</td>
+                <td className="py-3 px-4 font-mono text-white">$1,000 USD</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
