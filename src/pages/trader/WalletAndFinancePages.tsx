@@ -42,7 +42,7 @@ export const WalletPage: React.FC = () => {
             className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold transition-colors shadow-sm"
           >
             <PlusCircle className="w-3.5 h-3.5" />
-            <span>Add Funds (Live Account)</span>
+            <span>Deposit</span>
           </Link>
           <Link
             to="/trader/accounts?tab=live"
@@ -447,13 +447,13 @@ export const DepositPage: React.FC = () => {
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
         <div className="flex items-center gap-2 flex-wrap">
-          <h2 className="text-xl font-bold text-white">Add Funds — Live Trading Account</h2>
+          <h2 className="text-xl font-bold text-white">Deposit Funds</h2>
           <span className="text-[10px] font-bold px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-wider">
             bKash · Nagad · Rocket (Min ${minUSD} USD)
           </span>
         </div>
         <p className="text-xs text-slate-400 mt-1">
-          Submit Bangladeshi Taka (BDT) payment details for Finance verification. Approved funds credit exclusively to your verified <strong className="text-amber-300">Live Account (#{liveAccount?.accountNumber || 'NX-LIVE'})</strong> — never to Demo accounts.
+          Submit Bangladeshi Taka (BDT) payment details for Finance verification. Approved deposits credit your verified trading account (#{liveAccount?.accountNumber || 'NX-LIVE'}) at the live USD/BDT marketplace rate.
         </p>
       </div>
 
@@ -476,8 +476,8 @@ export const DepositPage: React.FC = () => {
         </div>
       )}
 
-      {/* Main Add Funds Card */}
-      <div className="bg-[#111827] border border-slate-800 rounded-2xl p-5 sm:p-7 space-y-6 shadow-xl">
+      {/* Main Deposit Card */}
+      <div className="bg-[#111827] border border-slate-800 rounded-2xl p-4 sm:p-7 space-y-6 shadow-xl">
         {/* Step 1: Payment Gateway Selector */}
         <div>
           <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2.5">
@@ -724,13 +724,13 @@ export const DepositPage: React.FC = () => {
             {submitting ? (
               <>
                 <RefreshCw className="w-4 h-4 animate-spin" />
-                <span>Submitting Add Funds Request...</span>
+                <span>Submitting Deposit...</span>
               </>
             ) : (
               <>
                 <CheckCircle2 className="w-4 h-4" />
                 <span>
-                  Submit Add Funds Request (৳{effectiveBDT.toLocaleString()} → ${netUSD} USD)
+                  Submit Deposit (৳{effectiveBDT.toLocaleString()} → ${netUSD} USD)
                 </span>
               </>
             )}
@@ -822,10 +822,10 @@ export const WithdrawalPage: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <div className="flex items-center gap-2">
-          <h2 className="text-xl font-bold text-white">Withdrawal Portal</h2>
+        <div className="flex items-center gap-2 flex-wrap">
+          <h2 className="text-xl font-bold text-white">Withdraw Funds</h2>
           <span className="text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30">
-            {isLive ? 'Live Account' : 'Demo Funds Non-Withdrawable'}
+            {isLive ? 'Verification Required' : 'Simulated Balance Locked'}
           </span>
         </div>
         <p className="text-xs text-slate-400 mt-1">

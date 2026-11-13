@@ -1,10 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import { db, UserRecord, SessionRecord } from './db.js';
+import { verifySessionToken } from './authToken.js';
 
 export interface AuthenticatedRequest extends Request {
   user?: UserRecord;
   session?: SessionRecord;
 }
+
+// Track explicitly logged-out token IDs in memory
+export const revokedTokenIds = new Set<string>();
 
 // In-memory rate limiting map for login and sensitive auth endpoints
 interface RateLimitEntry {
@@ -44,7 +48,7 @@ export function authenticate(req: AuthenticatedRequest, res: Response, next: Nex
   const cookieSession = req.cookies?.nextrade_session;
   const authHeader = req.headers.authorization;
   const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
-  const sessionToken = cookieSession || bearerToken;
+  const sessionToken = bearerToken || cookieSession;
 
   if (!sessionToken) {
     res.status(401).json({
@@ -54,7 +58,38 @@ export function authenticate(req: AuthenticatedRequest, res: Response, next: Nex
     return;
   }
 
-  const session = db.findSession(sessionToken);
+  // 1. Check local persistent session store first
+  let session = db.findSession(sessionToken);
+  let user: UserRecord | undefined;
+
+  if (session) {
+    user = db.findUserById(session.userId);
+  } else {
+    // 2. Fallback: verify HMAC-SHA256 signed stateless token (survives Vercel serverless cold starts & reloads)
+    const signed = verifySessionToken(sessionToken);
+    if (signed && !revokedTokenIds.has(signed.sid)) {
+      user = db.findUserById(signed.uid) || db.findUserByEmail(signed.email);
+      if (!user) {
+        user = db.rehydrateUserFromSignedData({
+          id: signed.uid,
+          fullName: signed.fullName,
+          email: signed.email,
+          role: signed.role,
+          kycStatus: signed.kycStatus as any,
+          country: signed.country,
+          phone: signed.phone,
+          referralCode: signed.referralCode
+        });
+      }
+      session = {
+        id: signed.sid,
+        userId: user.id,
+        expiresAt: signed.exp,
+        createdAt: new Date().toISOString()
+      };
+    }
+  }
+
   if (!session) {
     res.status(401).json({
       success: false,
@@ -63,7 +98,6 @@ export function authenticate(req: AuthenticatedRequest, res: Response, next: Nex
     return;
   }
 
-  const user = db.findUserById(session.userId);
   if (!user || !user.isActive) {
     db.destroySession(sessionToken);
     res.status(403).json({

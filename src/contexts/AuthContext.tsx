@@ -1,6 +1,28 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { PermissionCategory, StaffRecord, SystemRoleType } from '../types/admin';
 
+export interface PlatformReferralConfig {
+  enabled: boolean;
+  referrerCommissionPercent: number;
+  referrerSignupBonusUSD: number;
+  referredDiscountPercent: number;
+}
+
+export interface PlatformSettings {
+  requireKycToTrade: boolean;
+  referralConfig: PlatformReferralConfig;
+}
+
+export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
+  requireKycToTrade: false,
+  referralConfig: {
+    enabled: true,
+    referrerCommissionPercent: 10,
+    referrerSignupBonusUSD: 5,
+    referredDiscountPercent: 20
+  }
+};
+
 export interface User {
   id: string;
   fullName: string;
@@ -15,8 +37,13 @@ export interface User {
   kycDocumentType?: string;
   kycDocumentNumber?: string;
   kycDocumentFileName?: string;
+  kycFrontFileName?: string;
+  kycBackFileName?: string;
   kycSubmittedAt?: string;
   kycNotes?: string;
+  referralCode?: string;
+  referralEarnings?: number;
+  referralCount?: number;
   permissions?: PermissionCategory[];
   staffProfile?: StaffRecord | null;
 }
@@ -51,19 +78,29 @@ interface AuthContextType {
   hasPermission: (category: PermissionCategory) => boolean;
   serverTradingAccounts: TradingAccount[];
   bdtRate: number;
-  login: (email: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; message: string; role?: string }>;
-  register: (fullName: string, email: string, password: string, confirmPassword: string, phone?: string) => Promise<{ success: boolean; message: string }>;
+  platformSettings: PlatformSettings;
+  refreshPlatformSettings: () => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; message: string; role?: string; emailAlertSent?: boolean }>;
+  register: (fullName: string, email: string, password: string, confirmPassword: string, phone?: string, referralCode?: string) => Promise<{ success: boolean; message: string; emailAlertSent?: boolean }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateProfile: (data: { fullName?: string; country?: string; phone?: string }) => Promise<{ success: boolean; message: string }>;
   changePassword: (data: { currentPassword: string; newPassword: string; confirmPassword: string }) => Promise<{ success: boolean; message: string }>;
-  submitKyc: (data: { documentType: string; documentNumber: string; fileName: string }) => Promise<{ success: boolean; message: string }>;
+  submitKyc: (data: {
+    documentType: string;
+    documentNumber: string;
+    fileName?: string;
+    frontFileName?: string;
+    backFileName?: string;
+    frontImage?: string;
+    backImage?: string;
+  }) => Promise<{ success: boolean; message: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Read cached user synchronously so back button / home clicks never drop the authenticated state
+  // Read cached user synchronously so Chrome reload / back button / home clicks never drop the authenticated state
   const [user, setUser] = useState<User | null>(() => {
     try {
       const cached = localStorage.getItem('nextrade_cached_user');
@@ -76,6 +113,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState<boolean>(true);
   const [bdtRate, setBdtRate] = useState<number>(122.50);
   const [serverTradingAccounts, setServerTradingAccounts] = useState<TradingAccount[]>([]);
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings>(() => {
+    try {
+      const cached = localStorage.getItem('nextrade_platform_settings');
+      return cached ? JSON.parse(cached) : DEFAULT_PLATFORM_SETTINGS;
+    } catch {
+      return DEFAULT_PLATFORM_SETTINGS;
+    }
+  });
+
+  const applyPlatformSettings = (settings?: PlatformSettings | null) => {
+    if (!settings) return;
+    setPlatformSettings(settings);
+    try {
+      localStorage.setItem('nextrade_platform_settings', JSON.stringify(settings));
+    } catch {
+      // ignore storage quota errors
+    }
+  };
 
   // Sync state to localStorage whenever user changes
   const saveUserState = (u: User | null, token?: string) => {
@@ -102,6 +157,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const refreshPlatformSettings = useCallback(async () => {
+    try {
+      const res = await fetch('/api/platform/config', { credentials: 'include' });
+      if (res.ok) {
+        const data = await parseJsonSafe(res);
+        if (data?.settings) {
+          applyPlatformSettings(data.settings);
+        }
+        if (data?.bdtRate) {
+          setBdtRate(data.bdtRate);
+        }
+      }
+    } catch {
+      // keep cached settings
+    }
+  }, []);
+
   // Check current session from /api/auth/me on initial load and keep it synced
   const refreshUser = useCallback(async () => {
     try {
@@ -122,6 +194,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           saveUserState(data.user);
           if (data.bdtRate) {
             setBdtRate(data.bdtRate);
+          }
+          if (data.platformSettings) {
+            applyPlatformSettings(data.platformSettings);
           }
           if (Array.isArray(data.tradingAccounts)) {
             setServerTradingAccounts(data.tradingAccounts);
@@ -144,9 +219,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     refreshUser();
-  }, [refreshUser]);
+    refreshPlatformSettings();
+  }, [refreshUser, refreshPlatformSettings]);
 
-  const login = async (email: string, password: string, rememberMe = true): Promise<{ success: boolean; message: string; role?: string }> => {
+  const login = async (email: string, password: string, rememberMe = true): Promise<{ success: boolean; message: string; role?: string; emailAlertSent?: boolean }> => {
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -157,8 +233,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = await parseJsonSafe(res);
       if (res.ok && data?.success) {
         saveUserState(data.user, data.token);
+        if (data.platformSettings) {
+          applyPlatformSettings(data.platformSettings);
+        }
         refreshUser();
-        return { success: true, message: data.message, role: data.user.role };
+        return { success: true, message: data.message, role: data.user.role, emailAlertSent: !!data.emailAlertSent };
       }
       return {
         success: false,
@@ -169,18 +248,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (fullName: string, email: string, password: string, confirmPassword: string, phone?: string): Promise<{ success: boolean; message: string }> => {
+  const register = async (
+    fullName: string,
+    email: string,
+    password: string,
+    confirmPassword: string,
+    phone?: string,
+    referralCode?: string
+  ): Promise<{ success: boolean; message: string; emailAlertSent?: boolean }> => {
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ fullName, email, password, confirmPassword, phone })
+        body: JSON.stringify({ fullName, email, password, confirmPassword, phone, referralCode })
       });
       const data = await parseJsonSafe(res);
       if (res.ok && data?.success) {
         saveUserState(data.user, data.token);
-        return { success: true, message: data.message };
+        if (data.platformSettings) {
+          applyPlatformSettings(data.platformSettings);
+        }
+        return { success: true, message: data.message, emailAlertSent: !!data.emailAlertSent };
       }
       return {
         success: false,
@@ -206,7 +295,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const submitKyc = async (data: { documentType: string; documentNumber: string; fileName: string }): Promise<{ success: boolean; message: string }> => {
+  const submitKyc = async (data: {
+    documentType: string;
+    documentNumber: string;
+    fileName?: string;
+    frontFileName?: string;
+    backFileName?: string;
+    frontImage?: string;
+    backImage?: string;
+  }): Promise<{ success: boolean; message: string }> => {
     try {
       const token = localStorage.getItem('nextrade_token');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -220,22 +317,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         credentials: 'include',
         body: JSON.stringify(data)
       });
-      const result = await res.json();
-      if (res.ok && result.success) {
+      const result = await parseJsonSafe(res);
+      if (res.ok && result?.success) {
         if (user) {
           const updated: User = {
             ...user,
             kycStatus: 'PENDING',
             kycDocumentType: data.documentType,
             kycDocumentNumber: data.documentNumber,
-            kycDocumentFileName: data.fileName,
+            kycDocumentFileName: data.frontFileName || data.fileName || user.kycDocumentFileName,
+            kycFrontFileName: data.frontFileName || data.fileName || user.kycFrontFileName,
+            kycBackFileName: data.backFileName || user.kycBackFileName,
             kycSubmittedAt: new Date().toISOString()
           };
           saveUserState(updated);
         }
         return { success: true, message: result.message };
       }
-      return { success: false, message: result.message || 'Failed to submit KYC.' };
+      return { success: false, message: result?.message || 'Failed to submit KYC.' };
     } catch (err) {
       return { success: false, message: 'Network error submitting KYC document.' };
     }
@@ -253,15 +352,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         credentials: 'include',
         body: JSON.stringify(data)
       });
-      const result = await res.json();
-      if (res.ok && result.success) {
+      const result = await parseJsonSafe(res);
+      if (res.ok && result?.success) {
         if (user && result.user) {
           const updated = { ...user, ...result.user };
           saveUserState(updated);
         }
         return { success: true, message: result.message };
       }
-      return { success: false, message: result.message || 'Failed to update profile.' };
+      return { success: false, message: result?.message || 'Failed to update profile.' };
     } catch (err) {
       return { success: false, message: 'Network error updating profile.' };
     }
@@ -279,8 +378,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         credentials: 'include',
         body: JSON.stringify(data)
       });
-      const result = await res.json();
-      return { success: res.ok && result.success, message: result.message || 'Error updating password.' };
+      const result = await parseJsonSafe(res);
+      return { success: res.ok && !!result?.success, message: result?.message || 'Error updating password.' };
     } catch (err) {
       return { success: false, message: 'Network error updating password.' };
     }
@@ -307,6 +406,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         hasPermission,
         serverTradingAccounts,
         bdtRate,
+        platformSettings,
+        refreshPlatformSettings,
         login,
         register,
         logout,
@@ -328,4 +429,5 @@ export const useAuth = () => {
   }
   return context;
 };
+
 

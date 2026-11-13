@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { 
   TrendingUp, Lock, Mail, User, ShieldAlert, 
-  ArrowRight, CheckCircle2, ShieldCheck, RefreshCw, AlertCircle
+  CheckCircle2, RefreshCw, AlertCircle, Gift, Phone
 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
@@ -30,7 +30,9 @@ export const LoginPage: React.FC = () => {
         addToast({
           type: 'success',
           title: 'Authentication Successful',
-          message: 'Welcome back to NEXTRADE FX.'
+          message: res.emailAlertSent
+            ? 'Welcome back! A sign-in security alert was sent to your Gmail.'
+            : 'Welcome back to NEXTRADE FX. Sign-in security alert logged.'
         });
 
         // Strict role-based redirect:
@@ -60,7 +62,7 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto px-6 py-14 space-y-6">
+    <div className="max-w-md mx-auto px-4 sm:px-6 py-10 sm:py-14 space-y-6">
       <div className="text-center space-y-2">
         <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white mx-auto shadow-lg shadow-blue-500/20">
           <TrendingUp className="w-5 h-5 stroke-[2.5]" />
@@ -149,17 +151,27 @@ export const LoginPage: React.FC = () => {
 };
 
 export const RegisterPage: React.FC = () => {
-  const { register } = useAuth();
+  const { register, platformSettings } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [referralCode, setReferralCode] = useState(() => (searchParams.get('ref') || '').trim().toUpperCase());
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    const refParam = searchParams.get('ref');
+    if (refParam) {
+      setReferralCode(refParam.trim().toUpperCase());
+    }
+  }, [searchParams]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,12 +195,21 @@ export const RegisterPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const res = await register(fullName, email, password, confirmPassword);
+      const res = await register(
+        fullName,
+        email,
+        password,
+        confirmPassword,
+        phone.trim() || undefined,
+        referralCode.trim() || undefined
+      );
       if (res.success) {
         addToast({
           type: 'success',
           title: 'Registration Successful',
-          message: 'Your account and $1,000 USD virtual demo account have been provisioned.'
+          message: res.emailAlertSent
+            ? 'Account & $1,000 demo account ready! Welcome alert sent to your Gmail.'
+            : 'Your account and $1,000 USD virtual demo account have been provisioned.'
         });
         // Default role is USER, navigate to Trader Dashboard
         navigate('/trader/overview');
@@ -208,7 +229,7 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-lg mx-auto px-6 py-12 space-y-6">
+    <div className="max-w-lg mx-auto px-4 sm:px-6 py-10 sm:py-12 space-y-6">
       <div className="text-center space-y-2">
         <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white mx-auto shadow-lg shadow-blue-500/20">
           <TrendingUp className="w-5 h-5 stroke-[2.5]" />
@@ -219,7 +240,7 @@ export const RegisterPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="bg-[#111827] border border-slate-800 rounded-2xl p-6 space-y-5">
+      <div className="bg-[#111827] border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-5">
         {errorMsg && (
           <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-start gap-2">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -237,28 +258,68 @@ export const RegisterPage: React.FC = () => {
                 required
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
-                placeholder="Alexander Wright"
+                placeholder="Md Rahim Uddin"
                 autoComplete="name"
                 className="w-full bg-[#0B1220] border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-slate-300 font-semibold mb-1">Email Address</label>
-            <div className="relative">
-              <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="alexander@domain.com"
-                autoComplete="email"
-                className="w-full bg-[#0B1220] border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
-              />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">Email Address (Gmail)</label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="name@gmail.com"
+                  autoComplete="email"
+                  className="w-full bg-[#0B1220] border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">Bangladesh Phone</label>
+              <div className="relative">
+                <Phone className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                  placeholder="+880 17XX-XXXXXX"
+                  autoComplete="tel"
+                  className="w-full bg-[#0B1220] border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors font-mono"
+                />
+              </div>
             </div>
           </div>
+
+          {platformSettings?.referralConfig?.enabled && (
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">
+                Referral Code (Optional)
+                {referralCode && (
+                  <span className="ml-2 text-emerald-400 font-normal">
+                    · {platformSettings.referralConfig.referredDiscountPercent}% deposit fee discount active
+                  </span>
+                )}
+              </label>
+              <div className="relative">
+                <Gift className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  value={referralCode}
+                  onChange={e => setReferralCode(e.target.value.toUpperCase())}
+                  placeholder="e.g. NXTRADER1"
+                  className="w-full bg-[#0B1220] border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors font-mono uppercase"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>

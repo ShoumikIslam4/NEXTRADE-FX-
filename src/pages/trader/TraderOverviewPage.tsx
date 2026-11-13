@@ -96,13 +96,13 @@ export const TraderOverviewPage: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             {user?.kycStatus === 'APPROVED' ? (
               <Link
                 to="/trader/deposit"
                 className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition-colors"
               >
-                Add Funds (Live)
+                Deposit
               </Link>
             ) : (
               <Link

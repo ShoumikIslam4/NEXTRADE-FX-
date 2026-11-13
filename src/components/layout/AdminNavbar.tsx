@@ -2,12 +2,16 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { 
-  Search, Bell, Sun, Moon, ShieldCheck, 
-  ArrowUpRight, AlertCircle, ExternalLink, LogOut
+import {
+  Search, Sun, Moon,
+  ArrowUpRight, LogOut, Menu
 } from 'lucide-react';
 
-export const AdminNavbar: React.FC = () => {
+interface AdminNavbarProps {
+  onOpenMobileMenu?: () => void;
+}
+
+export const AdminNavbar: React.FC<AdminNavbarProps> = ({ onOpenMobileMenu }) => {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const location = useLocation();
@@ -28,12 +32,12 @@ export const AdminNavbar: React.FC = () => {
   else if (path.includes('orders')) sectionTitle = 'Order Execution Management';
   else if (path.includes('positions')) sectionTitle = 'Open Positions Dealing Desk';
   else if (path.includes('transactions')) sectionTitle = 'All Financial Transactions';
-  else if (path.includes('deposits')) sectionTitle = 'Demo Deposits Administration';
+  else if (path.includes('deposits')) sectionTitle = 'Deposits Administration';
   else if (path.includes('withdrawals')) sectionTitle = 'Withdrawal Queue & Approvals';
   else if (path.includes('payment-methods')) sectionTitle = 'Payment Gateways & Settings';
-  else if (path.includes('currency-pairs')) sectionTitle = 'Currency Pairs & Tradable Assets';
-  else if (path.includes('spreads')) sectionTitle = 'Spread Markup & Pricing Controls';
-  else if (path.includes('leverage')) sectionTitle = 'Leverage Rules & Margin Limits';
+  else if (path.includes('currency-pairs')) sectionTitle = 'Currency Pairs & Assets';
+  else if (path.includes('spreads')) sectionTitle = 'Spread Markup Controls';
+  else if (path.includes('leverage')) sectionTitle = 'Leverage Rules & Limits';
   else if (path.includes('commissions')) sectionTitle = 'Commission Structures';
   else if (path.includes('signals')) sectionTitle = 'Trading Signals Publisher';
   else if (path.includes('news')) sectionTitle = 'Market News Desk CMS';
@@ -45,15 +49,23 @@ export const AdminNavbar: React.FC = () => {
   else if (path.includes('reports')) sectionTitle = 'Operational & Financial Reports';
   else if (path.includes('staff')) sectionTitle = 'Staff Members & Operators';
   else if (path.includes('roles')) sectionTitle = 'RBAC Permissions Matrix';
-  else if (path.includes('audit-logs')) sectionTitle = 'Immutable Security Audit Logs';
+  else if (path.includes('audit-logs')) sectionTitle = 'Security Audit Logs';
   else if (path.includes('settings')) sectionTitle = 'Platform Global Settings';
 
   return (
-    <header className="h-14 bg-[#111827] border-b border-slate-800 flex items-center justify-between px-4 z-20 gap-3">
-      {/* Left: Section Title */}
+    <header className="h-14 bg-[#111827] border-b border-slate-800 flex items-center justify-between px-3 sm:px-4 z-20 gap-2 sm:gap-3">
+      {/* Left: Hamburger + Section Title */}
       <div className="flex items-center gap-2 min-w-0">
+        <button
+          type="button"
+          onClick={onOpenMobileMenu}
+          className="lg:hidden p-1.5 -ml-1 rounded-md text-slate-300 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
+          aria-label="Open Admin Menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
         <span className="text-xs font-semibold text-amber-500 hidden sm:inline">Admin /</span>
-        <h1 className="text-sm font-bold text-white truncate">{sectionTitle}</h1>
+        <h1 className="text-xs sm:text-sm font-bold text-white truncate">{sectionTitle}</h1>
       </div>
 
       {/* Center: Search Filter */}
@@ -69,23 +81,13 @@ export const AdminNavbar: React.FC = () => {
       </div>
 
       {/* Right: Quick actions and switcher */}
-      <div className="flex items-center gap-3">
-        <div className="hidden lg:flex items-center gap-3 text-xs border-r border-slate-800 pr-3">
-          <div className="flex items-center gap-1.5 text-slate-400">
-            <span>KYC Queue:</span>
-            <span className="font-bold text-amber-400 font-mono">2 Pending</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-slate-400">
-            <span>24h Vol:</span>
-            <span className="font-bold text-slate-200 font-mono">1,420 Lots</span>
-          </div>
-        </div>
-
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         <Link
           to="/trader/terminal"
-          className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded transition-colors whitespace-nowrap shadow-sm shadow-blue-500/20"
+          className="flex items-center gap-1 px-2.5 sm:px-3 py-1 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded transition-colors whitespace-nowrap shadow-sm shadow-blue-500/20"
         >
-          <span>Open Trader Terminal</span>
+          <span className="hidden sm:inline">Open Trader Terminal</span>
+          <span className="sm:hidden">Terminal</span>
           <ArrowUpRight className="w-3.5 h-3.5" />
         </Link>
 
@@ -99,8 +101,8 @@ export const AdminNavbar: React.FC = () => {
         </button>
 
         {/* Admin Avatar & Logout */}
-        <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
-          <div className="w-7 h-7 rounded bg-amber-600 text-white font-bold text-xs flex items-center justify-center">
+        <div className="flex items-center gap-1.5 sm:gap-2 pl-1.5 sm:pl-2 border-l border-slate-800">
+          <div className="w-7 h-7 rounded bg-amber-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
             {user?.fullName ? user.fullName.split(' ').map(n => n[0]).join('').slice(0, 2) : 'SA'}
           </div>
           <div className="hidden xl:block text-left">
@@ -109,7 +111,7 @@ export const AdminNavbar: React.FC = () => {
           </div>
           <button
             onClick={handleLogout}
-            className="p-1.5 ml-1 text-slate-400 hover:text-rose-400 rounded hover:bg-slate-800 transition-colors"
+            className="p-1.5 text-slate-400 hover:text-rose-400 rounded hover:bg-slate-800 transition-colors"
             title="Sign Out of Admin Console"
           >
             <LogOut className="w-4 h-4" />

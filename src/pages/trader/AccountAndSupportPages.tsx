@@ -4,54 +4,98 @@ import { useTrading } from '../../contexts/TradingContext';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   Shield, ShieldCheck, Bell, Upload, Clock, Laptop, Lock,
-  RefreshCw, Send, File, CheckCircle2, ShieldAlert, Check
+  RefreshCw, Send, CheckCircle2, ShieldAlert, Check, Gift, Copy, Users, Image as ImageIcon, Trash2
 } from 'lucide-react';
+
+async function compressImageToDataUrl(file: File, maxWidth = 1100, quality = 0.75): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Failed to read image file.'));
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      if (!file.type.startsWith('image/')) {
+        resolve(result);
+        return;
+      }
+      const img = new Image();
+      img.onload = () => {
+        const scale = img.width > maxWidth ? maxWidth / img.width : 1;
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(result);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, w, h);
+        try {
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        } catch {
+          resolve(result);
+        }
+      };
+      img.onerror = () => resolve(result);
+      img.src = result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 export const KycPage: React.FC = () => {
   const { addToast } = useToast();
-  const { user, submitKyc } = useAuth();
+  const { user, submitKyc, platformSettings } = useAuth();
   const [docType, setDocType] = useState(user?.kycDocumentType || 'NATIONAL_ID');
   const [docNumber, setDocNumber] = useState(user?.kycDocumentNumber || '');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
+
+  const [frontFile, setFrontFile] = useState<{ name: string; dataUrl: string; sizeKB: string } | null>(null);
+  const [backFile, setBackFile] = useState<{ name: string; dataUrl: string; sizeKB: string } | null>(null);
+  const [dragSide, setDragSide] = useState<'front' | 'back' | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const frontInputRef = useRef<HTMLInputElement>(null);
+  const backInputRef = useRef<HTMLInputElement>(null);
 
   const kycStatus = user?.kycStatus || 'UNSUBMITTED';
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setSelectedFile(file);
+  const processSideFile = async (file: File, side: 'front' | 'back') => {
+    try {
+      const dataUrl = await compressImageToDataUrl(file);
+      const entry = {
+        name: file.name,
+        dataUrl,
+        sizeKB: (file.size / 1024).toFixed(1)
+      };
+      if (side === 'front') setFrontFile(entry);
+      else setBackFile(entry);
+
       addToast({
         type: 'info',
-        title: 'Document Selected',
-        message: `Attached ${file.name} (${(file.size / 1024).toFixed(1)} KB)`
+        title: side === 'front' ? 'NID Front Image Attached' : 'NID Back Image Attached',
+        message: `${file.name} (${entry.sizeKB} KB) ready for Admin inspection.`
+      });
+    } catch {
+      addToast({
+        type: 'error',
+        title: 'File Error',
+        message: 'Could not read image file. Please choose a valid JPG or PNG image.'
       });
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
+  const handleSideInputChange = (e: React.ChangeEvent<HTMLInputElement>, side: 'front' | 'back') => {
+    if (e.target.files && e.target.files[0]) {
+      processSideFile(e.target.files[0], side);
+    }
   };
 
-  const handleDragLeave = (e: React.DragEvent) => {
+  const handleDropSide = (e: React.DragEvent, side: 'front' | 'back') => {
     e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
+    setDragSide(null);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      setSelectedFile(file);
-      addToast({
-        type: 'info',
-        title: 'Document Attached',
-        message: `Uploaded ${file.name} (${(file.size / 1024).toFixed(1)} KB)`
-      });
+      processSideFile(e.dataTransfer.files[0], side);
     }
   };
 
@@ -67,13 +111,24 @@ export const KycPage: React.FC = () => {
       return;
     }
 
-    setIsSubmitting(true);
-    const fileName = selectedFile ? selectedFile.name : `BD_${docType}_Document_${Date.now().toString().slice(-4)}.pdf`;
+    if (!frontFile || !backFile) {
+      addToast({
+        type: 'warning',
+        title: 'Front & Back NID Images Required',
+        message: 'Please upload BOTH the Front side and Back side images of your NID / ID card.'
+      });
+      return;
+    }
 
+    setIsSubmitting(true);
     const res = await submitKyc({
       documentType: docType,
       documentNumber: docNumber.trim(),
-      fileName
+      fileName: frontFile.name,
+      frontFileName: frontFile.name,
+      backFileName: backFile.name,
+      frontImage: frontFile.dataUrl,
+      backImage: backFile.dataUrl
     });
 
     setIsSubmitting(false);
@@ -81,8 +136,8 @@ export const KycPage: React.FC = () => {
     if (res.success) {
       addToast({
         type: 'success',
-        title: 'KYC Submitted Successfully',
-        message: 'Your document was received. Admin compliance will review your Live Account application.'
+        title: 'KYC Front & Back Submitted',
+        message: 'Both NID images were submitted. Admin compliance can inspect them and approve your account.'
       });
     } else {
       addToast({
@@ -96,15 +151,17 @@ export const KycPage: React.FC = () => {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-white">Live Account KYC Verification</h2>
+        <h2 className="text-xl font-bold text-white">KYC Identity Verification (NID Front &amp; Back)</h2>
         <p className="text-xs text-slate-400 mt-1">
-          Required to activate your Live Trading Account &amp; verified Add Funds ledger. (Demo trading works immediately without KYC.)
+          {platformSettings?.requireKycToTrade
+            ? 'KYC verification is currently REQUIRED by Admin policy before trading and Live Account Add Funds.'
+            : 'Required to activate your Live Trading Account & verified Add Funds ledger. (Demo trading currently works without KYC.)'}
         </p>
       </div>
 
       {/* KYC Status Card */}
       <div
-        className={`p-5 rounded-xl border ${
+        className={`p-4 sm:p-5 rounded-xl border ${
           kycStatus === 'APPROVED'
             ? 'bg-emerald-950/20 border-emerald-500/40 text-emerald-300'
             : kycStatus === 'PENDING'
@@ -117,7 +174,7 @@ export const KycPage: React.FC = () => {
         }`}
       >
         <div className="flex items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-start sm:items-center gap-3">
             <div
               className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shrink-0 ${
                 kycStatus === 'APPROVED'
@@ -143,7 +200,7 @@ export const KycPage: React.FC = () => {
             </div>
             <div>
               <div className="text-xs font-bold text-white flex items-center gap-2 flex-wrap">
-                <span>Live KYC Status:</span>
+                <span>KYC Verification Status:</span>
                 <span
                   className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase ${
                     kycStatus === 'APPROVED'
@@ -170,21 +227,21 @@ export const KycPage: React.FC = () => {
               </div>
               <p className="text-[11px] text-slate-400 mt-1">
                 {kycStatus === 'APPROVED'
-                  ? 'Your Live Account is verified and eligible for Finance-approved Add Funds.'
+                  ? 'Your identity is verified. Full trading & Live Account funding are unlocked.'
                   : kycStatus === 'PENDING'
-                  ? 'Your identity documents are in the Compliance Admin queue. You will receive a notification once reviewed.'
+                  ? 'Your NID front & back images are in the Admin compliance queue. You will be notified once reviewed.'
                   : kycStatus === 'ADDITIONAL_INFO_REQUIRED'
-                  ? `Compliance Admin requested clarification: ${user?.kycNotes || 'Please upload a clearer document scan.'}`
+                  ? `Compliance Admin requested clarification: ${user?.kycNotes || 'Please upload clearer Front & Back NID photos.'}`
                   : kycStatus === 'REJECTED'
-                  ? `Submission rejected: ${user?.kycNotes || 'Document image unreadable or mismatched.'} Please re-submit below.`
-                  : 'Submit your NID, Passport, or Driving License to unlock Live Trading Account onboarding and Add Funds.'}
+                  ? `Submission rejected: ${user?.kycNotes || 'Document image unreadable or mismatched.'} Please re-submit Front & Back below.`
+                  : 'Upload BOTH Front and Back photos of your Smart NID, Passport, or Driving License.'}
               </p>
             </div>
           </div>
         </div>
 
         {user?.kycDocumentNumber && (
-          <div className="mt-4 pt-3 border-t border-slate-700/60 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs font-mono">
+          <div className="mt-4 pt-3 border-t border-slate-700/60 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
             <div>
               <span className="text-[10px] text-slate-500 block font-sans">DOCUMENT TYPE</span>
               <span className="font-bold text-white">{user.kycDocumentType || docType}</span>
@@ -195,8 +252,10 @@ export const KycPage: React.FC = () => {
             </div>
             {user.kycSubmittedAt && (
               <div>
-                <span className="text-[10px] text-slate-500 block font-sans">SUBMITTED AT</span>
-                <span className="text-slate-300">{new Date(user.kycSubmittedAt).toLocaleDateString()}</span>
+                <span className="text-[10px] text-slate-500 block font-sans">FILES ATTACHED</span>
+                <span className="text-slate-300 truncate block">
+                  {user.kycFrontFileName || 'Front'} · {user.kycBackFileName || 'Back'}
+                </span>
               </div>
             )}
           </div>
@@ -205,134 +264,392 @@ export const KycPage: React.FC = () => {
 
       {/* Upload Form */}
       {kycStatus !== 'APPROVED' && (
-        <div className="bg-[#111827] border border-slate-800 rounded-xl p-6 space-y-6">
+        <div className="bg-[#111827] border border-slate-800 rounded-xl p-4 sm:p-6 space-y-6">
           <div className="border-b border-slate-800 pb-3">
             <h3 className="text-sm font-bold text-white">
               {kycStatus === 'REJECTED' || kycStatus === 'ADDITIONAL_INFO_REQUIRED'
-                ? 'Re-Submit Live Verification Documents'
-                : 'Submit Identity Documentation'}
+                ? 'Re-Submit Front & Back NID Images'
+                : 'Upload NID / ID Card (Front & Back Required)'}
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Attach your Government ID (Smart NID card, Passport, or BRTA Driving License).
+              Take or upload clear photos of BOTH the Front Side and Back Side of your ID card so Admin can verify it.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5 text-xs">
-            <div>
-              <label className="block text-slate-300 font-semibold mb-1.5">Document Category</label>
-              <select
-                value={docType}
-                onChange={(e) => setDocType(e.target.value)}
-                className="w-full bg-[#0B1220] border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500 text-xs"
-              >
-                <option value="NATIONAL_ID">Bangladesh Smart NID Card (National Identity Card)</option>
-                <option value="PASSPORT">Bangladeshi International Passport</option>
-                <option value="DRIVING_LICENSE">Bangladesh Driving License (BRTA)</option>
-              </select>
-            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1.5">Document Category</label>
+                <select
+                  value={docType}
+                  onChange={(e) => setDocType(e.target.value)}
+                  className="w-full bg-[#0B1220] border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500 text-xs"
+                >
+                  <option value="NATIONAL_ID">Bangladesh Smart NID Card</option>
+                  <option value="PASSPORT">Bangladeshi Passport</option>
+                  <option value="DRIVING_LICENSE">Bangladesh Driving License (BRTA)</option>
+                </select>
+              </div>
 
-            <div>
-              <label className="block text-slate-300 font-semibold mb-1.5">
-                {docType === 'NATIONAL_ID'
-                  ? 'National ID (NID) Number'
-                  : docType === 'PASSPORT'
-                  ? 'Passport Number'
-                  : 'Driving License Number'}
-              </label>
-              <input
-                type="text"
-                required
-                value={docNumber}
-                onChange={(e) => setDocNumber(e.target.value)}
-                placeholder={
-                  docType === 'NATIONAL_ID'
-                    ? 'e.g. 19942691001234567'
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1.5">
+                  {docType === 'NATIONAL_ID'
+                    ? 'National ID (NID) Number'
                     : docType === 'PASSPORT'
-                    ? 'e.g. A02819402'
-                    : 'e.g. DK0192849'
-                }
-                className="w-full bg-[#0B1220] border border-slate-700 rounded-lg p-2.5 text-white font-mono text-xs focus:outline-none focus:border-blue-500"
-              />
+                    ? 'Passport Number'
+                    : 'Driving License Number'}
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={docNumber}
+                  onChange={(e) => setDocNumber(e.target.value)}
+                  placeholder={
+                    docType === 'NATIONAL_ID'
+                      ? 'e.g. 19942691001234567'
+                      : docType === 'PASSPORT'
+                      ? 'e.g. A02819402'
+                      : 'e.g. DK0192849'
+                  }
+                  className="w-full bg-[#0B1220] border border-slate-700 rounded-lg p-2.5 text-white font-mono text-xs focus:outline-none focus:border-blue-500"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-slate-300 font-semibold mb-1.5">Upload Document File</label>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept="image/*,.pdf,.doc,.docx"
-                className="hidden"
-              />
+            {/* Dual NID Upload Grid: Front & Back */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* FRONT SIDE */}
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1.5 flex items-center justify-between">
+                  <span>1. NID / ID Front Side Image *</span>
+                  {frontFile && <span className="text-[10px] text-emerald-400 font-mono">READY</span>}
+                </label>
+                <input
+                  type="file"
+                  ref={frontInputRef}
+                  onChange={(e) => handleSideInputChange(e, 'front')}
+                  accept="image/*"
+                  className="hidden"
+                />
 
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
-                  isDragging
-                    ? 'border-blue-500 bg-blue-500/10'
-                    : selectedFile
-                    ? 'border-emerald-500/60 bg-emerald-500/5'
-                    : 'border-slate-700 hover:border-slate-500 bg-[#0B1220]/50'
-                }`}
-              >
-                {selectedFile ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                      <File className="w-6 h-6" />
+                <div
+                  onClick={() => frontInputRef.current?.click()}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragSide('front');
+                  }}
+                  onDragLeave={() => setDragSide(null)}
+                  onDrop={(e) => handleDropSide(e, 'front')}
+                  className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all min-h-[190px] flex flex-col items-center justify-center ${
+                    dragSide === 'front'
+                      ? 'border-blue-500 bg-blue-500/10'
+                      : frontFile
+                      ? 'border-emerald-500/60 bg-emerald-500/5'
+                      : 'border-slate-700 hover:border-slate-500 bg-[#0B1220]/50'
+                  }`}
+                >
+                  {frontFile ? (
+                    <div className="w-full space-y-2">
+                      <img
+                        src={frontFile.dataUrl}
+                        alt="NID Front Preview"
+                        className="w-full h-32 object-cover rounded-lg border border-slate-700"
+                      />
+                      <div className="flex items-center justify-between gap-2 text-[11px]">
+                        <span className="text-white font-semibold truncate">{frontFile.name}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFrontFile(null);
+                          }}
+                          className="p-1 rounded bg-rose-500/15 text-rose-400 hover:bg-rose-500/30 shrink-0"
+                          title="Remove Front Image"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="text-xs font-bold text-white">{selectedFile.name}</div>
-                    <div className="text-[11px] text-emerald-400 font-mono">
-                      {(selectedFile.size / 1024).toFixed(1)} KB · Ready to Submit
+                  ) : (
+                    <>
+                      <ImageIcon className="w-7 h-7 text-blue-400 mx-auto mb-2" />
+                      <div className="text-xs font-semibold text-white">Upload NID Front Side</div>
+                      <div className="text-[11px] text-slate-400 mt-1">Click to take photo or browse JPG / PNG</div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* BACK SIDE */}
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1.5 flex items-center justify-between">
+                  <span>2. NID / ID Back Side Image *</span>
+                  {backFile && <span className="text-[10px] text-emerald-400 font-mono">READY</span>}
+                </label>
+                <input
+                  type="file"
+                  ref={backInputRef}
+                  onChange={(e) => handleSideInputChange(e, 'back')}
+                  accept="image/*"
+                  className="hidden"
+                />
+
+                <div
+                  onClick={() => backInputRef.current?.click()}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragSide('back');
+                  }}
+                  onDragLeave={() => setDragSide(null)}
+                  onDrop={(e) => handleDropSide(e, 'back')}
+                  className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all min-h-[190px] flex flex-col items-center justify-center ${
+                    dragSide === 'back'
+                      ? 'border-blue-500 bg-blue-500/10'
+                      : backFile
+                      ? 'border-emerald-500/60 bg-emerald-500/5'
+                      : 'border-slate-700 hover:border-slate-500 bg-[#0B1220]/50'
+                  }`}
+                >
+                  {backFile ? (
+                    <div className="w-full space-y-2">
+                      <img
+                        src={backFile.dataUrl}
+                        alt="NID Back Preview"
+                        className="w-full h-32 object-cover rounded-lg border border-slate-700"
+                      />
+                      <div className="flex items-center justify-between gap-2 text-[11px]">
+                        <span className="text-white font-semibold truncate">{backFile.name}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setBackFile(null);
+                          }}
+                          className="p-1 rounded bg-rose-500/15 text-rose-400 hover:bg-rose-500/30 shrink-0"
+                          title="Remove Back Image"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedFile(null);
-                      }}
-                      className="mt-2 px-3 py-1 text-[11px] text-rose-400 hover:text-white bg-rose-500/10 hover:bg-rose-500/30 rounded border border-rose-500/30 transition-colors"
-                    >
-                      Remove File &amp; Choose Another
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <Upload className="w-8 h-8 text-blue-400 mx-auto mb-2.5" />
-                    <div className="text-xs font-semibold text-white">Click here or drag document file here</div>
-                    <div className="text-[11px] text-slate-400 mt-1">Supports JPG, PNG, PDF up to 15MB</div>
-                    <div className="mt-3">
-                      <span className="inline-block px-3 py-1 bg-[#151F30] border border-slate-700 rounded-lg text-[11px] text-slate-300 font-semibold hover:border-slate-500">
-                        Browse Files from Device
-                      </span>
-                    </div>
-                  </>
-                )}
+                  ) : (
+                    <>
+                      <Upload className="w-7 h-7 text-amber-400 mx-auto mb-2" />
+                      <div className="text-xs font-semibold text-white">Upload NID Back Side</div>
+                      <div className="text-[11px] text-slate-400 mt-1">Click to take photo or browse JPG / PNG</div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 text-white font-bold text-xs transition-colors shadow-md shadow-blue-600/20 flex items-center justify-center gap-2"
+              disabled={isSubmitting || !frontFile || !backFile}
+              className="w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-bold text-xs transition-colors shadow-md shadow-blue-600/20 flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Submitting to Compliance Team...</span>
+                  <span>Uploading Front &amp; Back NID...</span>
                 </>
               ) : (
                 <>
                   <ShieldCheck className="w-4 h-4" />
-                  <span>Submit Document for Live Verification</span>
+                  <span>Submit Front &amp; Back NID for Verification</span>
                 </>
               )}
             </button>
           </form>
         </div>
       )}
+    </div>
+  );
+};
+
+export const ReferralsPage: React.FC = () => {
+  const { user, platformSettings } = useAuth();
+  const { addToast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [refData, setRefData] = useState<{
+    referralCode: string;
+    referralEarnings: number;
+    referralCount: number;
+    referredUsers: Array<{ id: string; fullName: string; email: string; createdAt: string }>;
+    referralConfig: typeof platformSettings.referralConfig;
+  } | null>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const fetchReferrals = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('nextrade_token');
+      const res = await fetch('/api/user/referrals', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: 'include'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setRefData(data);
+        }
+      }
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReferrals();
+  }, []);
+
+  const code = refData?.referralCode || user?.referralCode || 'NXTRADER';
+  const config = refData?.referralConfig || platformSettings.referralConfig;
+  const inviteLink = `${window.location.origin}/register?ref=${code}`;
+
+  const copyText = (text: string, type: 'code' | 'link') => {
+    navigator.clipboard.writeText(text);
+    if (type === 'code') {
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    } else {
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    }
+    addToast({
+      type: 'success',
+      title: type === 'code' ? 'Referral Code Copied' : 'Invite Link Copied',
+      message: 'Share this with friends to earn bonuses and commissions.'
+    });
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <Gift className="w-5 h-5 text-emerald-400" />
+            <span>Refer &amp; Earn Partner Program</span>
+          </h2>
+          <p className="text-xs text-slate-400 mt-1">
+            Invite traders to NEXTRADE FX. Commissions, signup bonuses &amp; discounts are managed live by Admin.
+          </p>
+        </div>
+        <button
+          onClick={fetchReferrals}
+          className="self-start sm:self-auto px-3 py-1.5 rounded-lg bg-[#151F30] border border-slate-700 text-xs text-slate-300 hover:text-white flex items-center gap-1"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          <span>Refresh</span>
+        </button>
+      </div>
+
+      {/* Program Rates Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="p-4 bg-[#111827] border border-emerald-500/30 rounded-xl">
+          <div className="text-[11px] text-slate-400 uppercase font-semibold">Deposit Commission</div>
+          <div className="text-2xl font-bold font-mono text-emerald-400 mt-1">
+            {config.referrerCommissionPercent}%
+          </div>
+          <div className="text-[11px] text-slate-500 mt-0.5">Earned when friends deposit</div>
+        </div>
+        <div className="p-4 bg-[#111827] border border-blue-500/30 rounded-xl">
+          <div className="text-[11px] text-slate-400 uppercase font-semibold">Signup Bonus</div>
+          <div className="text-2xl font-bold font-mono text-blue-400 mt-1">
+            ${config.referrerSignupBonusUSD} USD
+          </div>
+          <div className="text-[11px] text-slate-500 mt-0.5">Credited per referred signup</div>
+        </div>
+        <div className="p-4 bg-[#111827] border border-amber-500/30 rounded-xl">
+          <div className="text-[11px] text-slate-400 uppercase font-semibold">Friend Fee Discount</div>
+          <div className="text-2xl font-bold font-mono text-amber-400 mt-1">
+            {config.referredDiscountPercent}% OFF
+          </div>
+          <div className="text-[11px] text-slate-500 mt-0.5">Discount for your invited friends</div>
+        </div>
+      </div>
+
+      {/* Share Card */}
+      <div className="bg-[#111827] border border-slate-800 rounded-xl p-5 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="text-xs font-bold text-white uppercase tracking-wider">Your Referral Code &amp; Link</div>
+            <div className="text-[11px] text-slate-400 mt-0.5">
+              Status: {config.enabled ? <span className="text-emerald-400 font-semibold">Program Active</span> : <span className="text-rose-400 font-semibold">Paused by Admin</span>}
+            </div>
+          </div>
+          <div className="flex items-center gap-3 text-xs font-mono">
+            <div className="px-3 py-1.5 rounded-lg bg-[#0B1220] border border-slate-800">
+              Invited: <strong className="text-white">{refData?.referralCount ?? user?.referralCount ?? 0}</strong>
+            </div>
+            <div className="px-3 py-1.5 rounded-lg bg-[#0B1220] border border-emerald-500/30 text-emerald-400">
+              Earned: <strong>${(refData?.referralEarnings ?? user?.referralEarnings ?? 0).toFixed(2)} USD</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div className="p-3 bg-[#0B1220] border border-slate-700 rounded-lg flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <span className="text-[10px] text-slate-500 block">REFERRAL CODE</span>
+              <span className="font-mono font-bold text-white text-sm">{code}</span>
+            </div>
+            <button
+              onClick={() => copyText(code, 'code')}
+              className="px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold flex items-center gap-1 shrink-0"
+            >
+              {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copiedCode ? 'Copied' : 'Copy'}</span>
+            </button>
+          </div>
+
+          <div className="p-3 bg-[#0B1220] border border-slate-700 rounded-lg flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <span className="text-[10px] text-slate-500 block">INVITE REGISTRATION LINK</span>
+              <span className="font-mono text-blue-400 truncate block">{inviteLink}</span>
+            </div>
+            <button
+              onClick={() => copyText(inviteLink, 'link')}
+              className="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center gap-1 shrink-0"
+            >
+              {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copiedLink ? 'Copied' : 'Copy Link'}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Referred Friends List */}
+      <div className="bg-[#111827] border border-slate-800 rounded-xl overflow-hidden">
+        <div className="p-4 border-b border-slate-800 flex items-center gap-2">
+          <Users className="w-4 h-4 text-blue-400" />
+          <h3 className="text-sm font-bold text-white">Your Referred Traders</h3>
+        </div>
+        {loading ? (
+          <div className="p-6 text-center text-xs text-slate-400">Loading referral network...</div>
+        ) : !refData?.referredUsers?.length ? (
+          <div className="p-6 text-center text-xs text-slate-500">
+            No friends have signed up with your referral code yet. Share your link above to start earning!
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-800/60 text-xs">
+            {refData.referredUsers.map((r) => (
+              <div key={r.id} className="p-4 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="font-bold text-white truncate">{r.fullName}</div>
+                  <div className="text-slate-400 font-mono truncate">{r.email}</div>
+                </div>
+                <span className="text-[11px] text-slate-500 font-mono shrink-0">
+                  {new Date(r.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -374,6 +691,9 @@ export const NotificationsPage: React.FC = () => {
 
   useEffect(() => {
     fetchNotifications();
+    const handler = () => fetchNotifications();
+    window.addEventListener('nextrade:notifications-updated', handler);
+    return () => window.removeEventListener('nextrade:notifications-updated', handler);
   }, []);
 
   const handleMarkAllRead = async () => {
@@ -386,6 +706,7 @@ export const NotificationsPage: React.FC = () => {
       });
       if (res.ok) {
         setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
+        window.dispatchEvent(new CustomEvent('nextrade:notifications-updated'));
         addToast({ type: 'success', title: 'Notifications Cleared', message: 'All alerts marked as read.' });
       }
     } catch {
@@ -663,7 +984,7 @@ export const ProfilePage: React.FC = () => {
                 className="w-full bg-[#0B1220] border border-slate-700 rounded-lg p-2 text-white"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-slate-400 text-[11px] font-semibold mb-1">Country</label>
                 <input
@@ -693,7 +1014,7 @@ export const ProfilePage: React.FC = () => {
             </button>
           </form>
         ) : (
-          <div className="grid grid-cols-2 gap-4 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
             <div>
               <span className="text-slate-500 block text-[11px]">Primary Email</span>
               <span className="text-white font-semibold">{user?.email}</span>
@@ -821,7 +1142,7 @@ export const SecuritySettingsPage: React.FC = () => {
               className="w-full bg-[#0B1220] border border-slate-700 rounded-lg p-2 text-white text-xs"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-slate-300 font-semibold mb-1 text-[11px]">New Password</label>
               <input

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTrading } from '../../contexts/TradingContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { TradingTerminalChart } from '../../components/charts/TradingTerminalChart';
 import { AssetCategory } from '../../types/market';
 import { OrderSide, OrderType } from '../../types/trading';
@@ -8,7 +9,7 @@ import { calculateMarginRequired } from '../../services/tradingEngine';
 import { ResetDemoModal } from '../../components/common/ResetDemoModal';
 import {
   Search, Star, Clock, ArrowUpRight, ArrowDownRight, X, CheckCircle2,
-  AlertCircle, SlidersHorizontal, Activity, ShieldAlert, AlertTriangle
+  AlertCircle, SlidersHorizontal, Activity, ShieldAlert, AlertTriangle, Lock
 } from 'lucide-react';
 
 export const TradingTerminalPage: React.FC = () => {
@@ -19,6 +20,11 @@ export const TradingTerminalPage: React.FC = () => {
     closePosition, cancelPendingOrder, totalFloatingProfit, switchAccount,
     isDemoExhausted, setDemoExhaustedModalOpen
   } = useTrading();
+  const { user, platformSettings } = useAuth();
+  const kycGateBlocked =
+    Boolean(platformSettings?.requireKycToTrade) &&
+    user?.role === 'USER' &&
+    user?.kycStatus !== 'APPROVED';
 
   // Search and category filter for Market Watch
   const [searchQuery, setSearchQuery] = useState('');
@@ -99,6 +105,26 @@ export const TradingTerminalPage: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4 w-full">
+      {/* Admin KYC Requirement Banner */}
+      {kycGateBlocked && (
+        <div className="w-full p-3.5 bg-amber-950/40 border border-amber-500/40 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-md">
+          <div className="flex items-start sm:items-center gap-2.5 text-amber-200">
+            <Lock className="w-5 h-5 shrink-0 text-amber-400 mt-0.5 sm:mt-0" />
+            <div>
+              <span className="font-bold text-amber-300">KYC Verification Required Before Trading:</span>{' '}
+              Admin has enabled mandatory KYC verification. Upload both sides (Front &amp; Back) of your NID/ID and wait for Admin approval to execute trades. Current status:{' '}
+              <span className="font-mono font-bold uppercase text-white">{(user?.kycStatus || 'UNSUBMITTED').replace(/_/g, ' ')}</span>.
+            </div>
+          </div>
+          <Link
+            to="/trader/kyc"
+            className="px-3.5 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg shrink-0 transition-colors text-center"
+          >
+            {user?.kycStatus === 'PENDING' ? 'View KYC Status' : 'Verify NID / KYC Now'}
+          </Link>
+        </div>
+      )}
+
       {/* Demo Allocation Exhausted Banner */}
       {activeAccount.mode === 'DEMO' && isDemoExhausted && (
         <div className="w-full p-3.5 bg-rose-950/40 border border-rose-500/40 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-md">
@@ -500,6 +526,15 @@ export const TradingTerminalPage: React.FC = () => {
                   Demo Balance Exhausted — Apply Live
                 </button>
               </div>
+            ) : kycGateBlocked ? (
+              <div className="space-y-2 mt-2">
+                <Link
+                  to="/trader/kyc"
+                  className="block w-full py-2.5 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white text-center transition-colors shadow-md"
+                >
+                  {user?.kycStatus === 'PENDING' ? 'KYC Pending Admin Approval' : 'Complete KYC Before Trading'}
+                </Link>
+              </div>
             ) : (
               <button
                 type="submit"
@@ -519,7 +554,7 @@ export const TradingTerminalPage: React.FC = () => {
       {/* Bottom Section: Positions, Pending, History */}
       <div className="w-full bg-[#111827] border border-slate-800 rounded-lg flex flex-col min-h-[260px] max-h-[380px] overflow-hidden shadow-sm">
         <div className="flex flex-wrap items-center justify-between px-3 py-2 bg-[#151F30] border-b border-slate-800 shrink-0 gap-2">
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex flex-wrap items-center gap-1 sm:gap-2">
             <button
               onClick={() => setBottomTab('positions')}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${

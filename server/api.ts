@@ -1,10 +1,77 @@
 import express, { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { db } from './db.js';
-import { AuthenticatedRequest, rateLimit, authenticate, requireSuperAdmin, requirePermission, requireStaffOrAdmin } from './middleware.js';
+import { db, UserRecord } from './db.js';
+import {
+  AuthenticatedRequest,
+  rateLimit,
+  authenticate,
+  requireSuperAdmin,
+  requirePermission,
+  requireStaffOrAdmin,
+  revokedTokenIds
+} from './middleware.js';
+import {
+  signSessionToken,
+  verifySessionToken,
+  encryptAccountCheckpoint,
+  decryptAccountCheckpoint
+} from './authToken.js';
+import { sendLoginAlertEmail, isEmailServiceConfigured } from './mailer.js';
 
 const router = express.Router();
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function issueAuthSession(req: Request, res: Response, user: UserRecord) {
+  const durationMs = 30 * 24 * 60 * 60 * 1000;
+  const session = db.createSession(user.id, durationMs, {
+    ip: (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1',
+    ua: req.headers['user-agent']
+  });
+
+  const signedToken = signSessionToken({
+    sid: session.id,
+    uid: user.id,
+    email: user.email,
+    fullName: user.fullName,
+    role: user.role,
+    kycStatus: user.kycStatus,
+    country: user.country,
+    phone: user.phone,
+    referralCode: user.referralCode,
+    exp: Date.now() + durationMs
+  });
+
+  const isProd = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL);
+
+  res.cookie('nextrade_session', signedToken, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: 'lax',
+    maxAge: durationMs
+  });
+
+  const checkpoint = encryptAccountCheckpoint({
+    id: user.id,
+    fullName: user.fullName,
+    email: user.email,
+    passwordHash: user.passwordHash,
+    role: user.role,
+    phone: user.phone,
+    country: user.country,
+    referralCode: user.referralCode,
+    referredBy: user.referredBy,
+    createdAt: user.createdAt
+  });
+
+  res.cookie('nextrade_acct', checkpoint, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: 'lax',
+    maxAge: 365 * 24 * 60 * 60 * 1000
+  });
+
+  return signedToken;
+}
 
 function validatePasswordStrength(password: string): { valid: boolean; reason?: string } {
   if (password.length < 8) {
@@ -26,9 +93,9 @@ function validatePasswordStrength(password: string): { valid: boolean; reason?: 
 }
 
 // 1. REGISTER
-router.post('/auth/register', rateLimit(10, 10 * 60 * 1000), (req: Request, res: Response): void => {
+router.post('/auth/register', rateLimit(15, 10 * 60 * 1000), async (req: Request, res: Response): Promise<void> => {
   try {
-    const { fullName, email, password, confirmPassword, phone } = req.body;
+    const { fullName, email, password, confirmPassword, phone, referralCode } = req.body;
 
     if (!fullName || typeof fullName !== 'string' || fullName.trim().length < 2) {
       res.status(400).json({ success: false, message: 'Please provide a valid full name (minimum 2 characters).' });
@@ -73,25 +140,33 @@ router.post('/auth/register', rateLimit(10, 10 * 60 * 1000), (req: Request, res:
       fullName: fullName.trim(),
       email: cleanEmail,
       passwordHash,
-      phone: phone || '+880 1712-000000'
+      phone: phone || '+880 1712-000000',
+      referredByCode: typeof referralCode === 'string' ? referralCode : undefined
     });
 
-    // Persistent Session: 30 days default so back button or reload never logs user out!
-    const session = db.createSession(newUser.id, 30 * 24 * 60 * 60 * 1000, {
-      ip: (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1',
-      ua: req.headers['user-agent']
+    const signedToken = issueAuthSession(req, res, newUser);
+    const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
+    const ua = req.headers['user-agent'] || 'Web Browser';
+
+    const emailResult = await sendLoginAlertEmail({
+      to: newUser.email,
+      fullName: newUser.fullName,
+      isNewRegistration: true,
+      ip,
+      userAgent: ua
     });
 
-    res.cookie('nextrade_session', session.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000
-    });
+    db.addNotification(
+      newUser.id,
+      'Welcome & Account Sign-In Alert',
+      `Your account (${newUser.email}) was created and signed in from IP ${ip}.${emailResult.sent ? ' A confirmation alert was sent to your Gmail.' : ''}`,
+      'SYSTEM'
+    );
 
     res.status(201).json({
       success: true,
       message: 'Account registered successfully! Welcome to NEXTRADE FX.',
+      emailAlertSent: emailResult.sent,
       user: {
         id: newUser.id,
         fullName: newUser.fullName,
@@ -100,9 +175,13 @@ router.post('/auth/register', rateLimit(10, 10 * 60 * 1000), (req: Request, res:
         kycStatus: newUser.kycStatus,
         country: newUser.country,
         phone: newUser.phone,
+        referralCode: newUser.referralCode,
+        referralEarnings: newUser.referralEarnings || 0,
+        referralCount: newUser.referralCount || 0,
         createdAt: newUser.createdAt
       },
-      token: session.id
+      platformSettings: db.getPlatformSettings(),
+      token: signedToken
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal error during registration.' });
@@ -110,7 +189,7 @@ router.post('/auth/register', rateLimit(10, 10 * 60 * 1000), (req: Request, res:
 });
 
 // 2. LOGIN
-router.post('/auth/login', rateLimit(15, 15 * 60 * 1000), (req: Request, res: Response): void => {
+router.post('/auth/login', rateLimit(20, 15 * 60 * 1000), async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -119,7 +198,25 @@ router.post('/auth/login', rateLimit(15, 15 * 60 * 1000), (req: Request, res: Re
     }
 
     const cleanEmail = email.toLowerCase().trim();
-    const user = db.findUserByEmail(cleanEmail);
+    let user = db.findUserByEmail(cleanEmail);
+
+    // Serverless cold-start resilience: rehydrate registered user from signed HttpOnly checkpoint if needed
+    if (!user && req.cookies?.nextrade_acct) {
+      const checkpoint = decryptAccountCheckpoint(req.cookies.nextrade_acct);
+      if (checkpoint && checkpoint.email.toLowerCase() === cleanEmail) {
+        user = db.rehydrateUserFromSignedData({
+          id: checkpoint.id,
+          fullName: checkpoint.fullName,
+          email: checkpoint.email,
+          passwordHash: checkpoint.passwordHash,
+          role: checkpoint.role,
+          country: checkpoint.country,
+          phone: checkpoint.phone,
+          referralCode: checkpoint.referralCode,
+          createdAt: checkpoint.createdAt
+        });
+      }
+    }
 
     if (!user) {
       res.status(401).json({ success: false, message: 'Invalid credentials. Please verify your email and password.' });
@@ -137,14 +234,26 @@ router.post('/auth/login', rateLimit(15, 15 * 60 * 1000), (req: Request, res: Re
       return;
     }
 
-    // 30 days persistent session
-    const durationMs = 30 * 24 * 60 * 60 * 1000;
-    const session = db.createSession(user.id, durationMs, {
-      ip: (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1',
-      ua: req.headers['user-agent']
+    const signedToken = issueAuthSession(req, res, user);
+    db.updateLastLogin(user.id);
+
+    const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
+    const ua = req.headers['user-agent'] || 'Web Browser';
+
+    const emailResult = await sendLoginAlertEmail({
+      to: user.email,
+      fullName: user.fullName,
+      isNewRegistration: false,
+      ip,
+      userAgent: ua
     });
 
-    db.updateLastLogin(user.id);
+    db.addNotification(
+      user.id,
+      'New Sign-In Security Notification',
+      `Signed in to ${user.email} at ${new Date().toLocaleString()} (IP: ${ip}).${emailResult.sent ? ' Gmail security alert sent.' : ''}`,
+      'SYSTEM'
+    );
 
     const allPermissions = [
       'Dashboard', 'Users', 'Staff', 'Roles', 'Accounts', 'KYC',
@@ -152,7 +261,7 @@ router.post('/auth/login', rateLimit(15, 15 * 60 * 1000), (req: Request, res: Re
       'Markets', 'Reports', 'CMS', 'Website Settings',
       'Notifications', 'Support', 'Security', 'Audit Logs'
     ];
-    const staffRecord = db.getAllStaff().find(s => s.email.toLowerCase() === user.email.toLowerCase());
+    const staffRecord = db.getAllStaff().find(s => s.email.toLowerCase() === user!.email.toLowerCase());
     if (staffRecord) {
       db.updateStaff(staffRecord.id, { lastLogin: new Date().toISOString() });
     }
@@ -160,16 +269,10 @@ router.post('/auth/login', rateLimit(15, 15 * 60 * 1000), (req: Request, res: Re
       ? allPermissions
       : (staffRecord && staffRecord.status === 'ACTIVE' ? staffRecord.permissions : []);
 
-    res.cookie('nextrade_session', session.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: durationMs
-    });
-
     res.json({
       success: true,
       message: 'Authentication successful.',
+      emailAlertSent: emailResult.sent,
       user: {
         id: user.id,
         fullName: user.fullName,
@@ -179,16 +282,22 @@ router.post('/auth/login', rateLimit(15, 15 * 60 * 1000), (req: Request, res: Re
         kycDocumentType: user.kycDocumentType,
         kycDocumentNumber: user.kycDocumentNumber,
         kycDocumentFileName: user.kycDocumentFileName,
+        kycFrontFileName: user.kycFrontFileName,
+        kycBackFileName: user.kycBackFileName,
         kycSubmittedAt: user.kycSubmittedAt,
         kycNotes: user.kycNotes,
         country: user.country,
         phone: user.phone,
+        referralCode: user.referralCode,
+        referralEarnings: user.referralEarnings || 0,
+        referralCount: user.referralCount || 0,
         createdAt: user.createdAt,
         lastLoginAt: user.lastLoginAt,
         permissions,
         staffProfile: staffRecord || null
       },
-      token: session.id
+      platformSettings: db.getPlatformSettings(),
+      token: signedToken
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'An internal authentication error occurred.' });
@@ -201,17 +310,16 @@ router.get('/auth/me', authenticate, (req: AuthenticatedRequest, res: Response):
   const tradingAccounts = db.getUserTradingAccounts(user.id);
   const bdtRate = db.getBdtRate();
 
-  // Determine permissions based on role or staff record
   const allPermissions = [
-    'Dashboard', 'Users', 'Staff', 'Roles', 'Accounts', 'KYC', 
-    'Deposits', 'Withdrawals', 'Payment Methods', 'Trading', 
-    'Markets', 'Reports', 'CMS', 'Website Settings', 
+    'Dashboard', 'Users', 'Staff', 'Roles', 'Accounts', 'KYC',
+    'Deposits', 'Withdrawals', 'Payment Methods', 'Trading',
+    'Markets', 'Reports', 'CMS', 'Website Settings',
     'Notifications', 'Support', 'Security', 'Audit Logs'
   ];
 
   const staffRecord = db.getAllStaff().find(s => s.email.toLowerCase() === user.email.toLowerCase());
-  const permissions = user.role === 'SUPER_ADMIN' 
-    ? allPermissions 
+  const permissions = user.role === 'SUPER_ADMIN'
+    ? allPermissions
     : (staffRecord && staffRecord.status === 'ACTIVE' ? staffRecord.permissions : []);
 
   res.json({
@@ -225,17 +333,23 @@ router.get('/auth/me', authenticate, (req: AuthenticatedRequest, res: Response):
       kycDocumentType: user.kycDocumentType,
       kycDocumentNumber: user.kycDocumentNumber,
       kycDocumentFileName: user.kycDocumentFileName,
+      kycFrontFileName: user.kycFrontFileName,
+      kycBackFileName: user.kycBackFileName,
       kycSubmittedAt: user.kycSubmittedAt,
       kycNotes: user.kycNotes,
       country: user.country,
       phone: user.phone,
+      referralCode: user.referralCode,
+      referralEarnings: user.referralEarnings || 0,
+      referralCount: user.referralCount || 0,
       createdAt: user.createdAt,
       lastLoginAt: user.lastLoginAt,
       permissions,
       staffProfile: staffRecord || null
     },
     tradingAccounts,
-    bdtRate
+    bdtRate,
+    platformSettings: db.getPlatformSettings()
   });
 });
 
@@ -244,20 +358,32 @@ router.post('/auth/logout', (req: Request, res: Response): void => {
   const cookieSession = req.cookies?.nextrade_session;
   const authHeader = req.headers.authorization;
   const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
-  const sessionToken = cookieSession || bearerToken;
+  const sessionToken = bearerToken || cookieSession;
 
   if (sessionToken) {
     db.destroySession(sessionToken);
+    const signed = verifySessionToken(sessionToken);
+    if (signed?.sid) {
+      revokedTokenIds.add(signed.sid);
+    }
   }
 
   res.clearCookie('nextrade_session');
   res.json({ success: true, message: 'Signed out successfully.' });
 });
 
-// 5. SUBMIT KYC (User)
+// 5. SUBMIT KYC (User — NID Front & Back Images)
 router.post('/user/kyc', authenticate, (req: AuthenticatedRequest, res: Response): void => {
   try {
-    const { documentType, documentNumber, fileName } = req.body;
+    const {
+      documentType,
+      documentNumber,
+      fileName,
+      frontFileName,
+      backFileName,
+      frontImage,
+      backImage
+    } = req.body;
     const user = req.user!;
 
     if (!documentType || !documentNumber) {
@@ -267,8 +393,12 @@ router.post('/user/kyc', authenticate, (req: AuthenticatedRequest, res: Response
 
     const updated = db.submitKyc(user.id, {
       documentType,
-      documentNumber: documentNumber.trim(),
-      fileName: fileName || 'National_ID_Bangladesh.pdf'
+      documentNumber: String(documentNumber).trim(),
+      fileName: fileName || frontFileName || 'NID_Front.jpg',
+      frontFileName: frontFileName || fileName || 'NID_Front.jpg',
+      backFileName: backFileName || 'NID_Back.jpg',
+      frontImage: typeof frontImage === 'string' && frontImage.startsWith('data:') ? frontImage : undefined,
+      backImage: typeof backImage === 'string' && backImage.startsWith('data:') ? backImage : undefined
     });
 
     db.addAuditLog({
@@ -277,19 +407,21 @@ router.post('/user/kyc', authenticate, (req: AuthenticatedRequest, res: Response
       actorRole: user.role,
       action: 'KYC_SUBMITTED',
       resource: 'UserKYC',
-      details: `User submitted ${documentType} #${documentNumber} for compliance review.`,
+      details: `User submitted ${documentType} #${documentNumber} (Front & Back images) for compliance review.`,
       ipAddress: (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1'
     });
 
     res.json({
       success: true,
-      message: 'KYC document submitted successfully. Awaiting Admin review.',
+      message: 'KYC front & back documents submitted successfully. Awaiting Admin review.',
       user: {
         ...user,
         kycStatus: 'PENDING',
         kycDocumentType: documentType,
         kycDocumentNumber: documentNumber,
-        kycDocumentFileName: fileName
+        kycDocumentFileName: updated?.kycDocumentFileName,
+        kycFrontFileName: updated?.kycFrontFileName,
+        kycBackFileName: updated?.kycBackFileName
       }
     });
   } catch (error) {
@@ -373,15 +505,48 @@ router.get('/user/deposits', authenticate, (req: AuthenticatedRequest, res: Resp
   res.json({ success: true, deposits });
 });
 
-// 7B. USER NOTIFICATIONS
+// 7B. USER NOTIFICATIONS & TRADE ALERTS
 router.get('/user/notifications', authenticate, (req: AuthenticatedRequest, res: Response): void => {
   const notifications = db.getUserNotifications(req.user!.id);
   res.json({ success: true, notifications });
 });
 
+router.post('/user/notifications', authenticate, (req: AuthenticatedRequest, res: Response): void => {
+  const { title, message, category } = req.body;
+  if (!title || !message) {
+    res.status(400).json({ success: false, message: 'Title and message are required.' });
+    return;
+  }
+  const notif = db.addNotification(
+    req.user!.id,
+    String(title).slice(0, 120),
+    String(message).slice(0, 500),
+    ['KYC', 'DEPOSIT', 'TRADING', 'SYSTEM'].includes(category) ? category : 'TRADING'
+  );
+  res.status(201).json({ success: true, notification: notif });
+});
+
 router.put('/user/notifications/read', authenticate, (req: AuthenticatedRequest, res: Response): void => {
   db.markNotificationsRead(req.user!.id);
   res.json({ success: true });
+});
+
+// 7B-2. USER REFERRAL DASHBOARD & PLATFORM CONFIG
+router.get('/user/referrals', authenticate, (req: AuthenticatedRequest, res: Response): void => {
+  const info = db.getUserReferrals(req.user!.id);
+  if (!info) {
+    res.status(404).json({ success: false, message: 'User not found.' });
+    return;
+  }
+  res.json({ success: true, ...info });
+});
+
+router.get('/platform/config', (_req: Request, res: Response): void => {
+  res.json({
+    success: true,
+    settings: db.getPlatformSettings(),
+    bdtRate: db.getBdtRate()
+  });
 });
 
 // 7C. LIVE ACCOUNT APPLICATION & DEMO RESTRICTIONS (PHASE 1)
@@ -632,6 +797,37 @@ router.put('/admin/bdt-rate', authenticate, requirePermission('Website Settings'
   res.json({ success: true, message: `Exchange rate set to ৳${numRate} BDT per USD.`, rate: numRate });
 });
 
+// 12B. ADMIN PLATFORM SETTINGS (KYC TOGGLE & REFERRAL COMMISSION/DISCOUNT CONFIG)
+router.get('/admin/settings', authenticate, requireStaffOrAdmin, (_req: AuthenticatedRequest, res: Response): void => {
+  res.json({
+    success: true,
+    settings: db.getPlatformSettings(),
+    bdtRate: db.getBdtRate(),
+    emailNotificationsConfigured: isEmailServiceConfigured()
+  });
+});
+
+router.put('/admin/settings', authenticate, requireStaffOrAdmin, (req: AuthenticatedRequest, res: Response): void => {
+  const { requireKycToTrade, referralConfig } = req.body;
+  const updated = db.updatePlatformSettings({ requireKycToTrade, referralConfig });
+
+  db.addAuditLog({
+    actorId: req.user!.id,
+    actorEmail: req.user!.email,
+    actorRole: req.user!.role,
+    action: 'PLATFORM_SETTINGS_UPDATED',
+    resource: 'PlatformSettings',
+    details: `KYC Required to Trade: ${updated.requireKycToTrade ? 'ON' : 'OFF'}; Referral Enabled: ${updated.referralConfig.enabled}, Commission: ${updated.referralConfig.referrerCommissionPercent}%, Signup Bonus: $${updated.referralConfig.referrerSignupBonusUSD}, Discount: ${updated.referralConfig.referredDiscountPercent}%`,
+    ipAddress: (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1'
+  });
+
+  res.json({
+    success: true,
+    message: 'Platform settings saved successfully.',
+    settings: updated
+  });
+});
+
 // 13. ADMIN OVERVIEW STATS
 router.get('/admin/overview-stats', authenticate, requireStaffOrAdmin, (req: AuthenticatedRequest, res: Response): void => {
   const allUsers = db.getAllUsers();
@@ -651,8 +847,10 @@ router.get('/admin/overview-stats', authenticate, requireStaffOrAdmin, (req: Aut
       totalVolumeLots: 1420.5,
       pendingKyc: pendingKycCount,
       pendingDeposits: pendingDepositsCount,
-      bdtRate: db.getBdtRate()
+      bdtRate: db.getBdtRate(),
+      emailNotificationsConfigured: isEmailServiceConfigured()
     },
+    platformSettings: db.getPlatformSettings(),
     recentUsers: allUsers.slice(-5).reverse(),
     recentLogs: auditLogs,
     pendingDeposits: deposits.filter(d => d.status === 'PENDING')

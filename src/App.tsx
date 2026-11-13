@@ -46,7 +46,7 @@ import {
   WalletPage, DepositPage, WithdrawalPage, TransactionsPage 
 } from './pages/trader/WalletAndFinancePages';
 import { 
-  KycPage, NotificationsPage, ReportsPage, TicketsPage, 
+  KycPage, ReferralsPage, NotificationsPage, ReportsPage, TicketsPage, 
   ProfilePage, AccountSettingsPage, SecuritySettingsPage 
 } from './pages/trader/AccountAndSupportPages';
 
@@ -125,6 +125,7 @@ export default function App() {
                   <Route path="withdrawal" element={<WithdrawalPage />} />
                   <Route path="transactions" element={<TransactionsPage />} />
                   <Route path="kyc" element={<KycPage />} />
+                  <Route path="referrals" element={<ReferralsPage />} />
                   <Route path="notifications" element={<NotificationsPage />} />
                   <Route path="reports" element={<ReportsPage />} />
                   <Route path="tickets" element={<TicketsPage />} />

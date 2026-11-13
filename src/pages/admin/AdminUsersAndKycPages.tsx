@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useToast } from '../../contexts/ToastContext';
 import { useTrading } from '../../contexts/TradingContext';
+import { useAuth } from '../../contexts/AuthContext';
 import {
-  Search, CheckCircle2, XCircle, HelpCircle, X
+  Search, CheckCircle2, XCircle, HelpCircle, X, ShieldCheck, ShieldOff, Eye, ZoomIn
 } from 'lucide-react';
 
 export const UserManagementPage: React.FC = () => {
@@ -279,13 +280,17 @@ export const UserManagementPage: React.FC = () => {
 
 export const KycManagementPage: React.FC = () => {
   const { addToast } = useToast();
+  const { platformSettings, refreshPlatformSettings } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [togglingPolicy, setTogglingPolicy] = useState(false);
   const [reviewModal, setReviewModal] = useState<{
     user: any;
     action: 'REJECTED' | 'ADDITIONAL_INFO_REQUIRED';
   } | null>(null);
   const [reviewNotes, setReviewNotes] = useState('');
+  const [previewDocUser, setPreviewDocUser] = useState<any | null>(null);
+  const [zoomImage, setZoomImage] = useState<{ label: string; src: string } | null>(null);
 
   const fetchUsers = async () => {
     try {
@@ -309,7 +314,40 @@ export const KycManagementPage: React.FC = () => {
 
   React.useEffect(() => {
     fetchUsers();
-  }, []);
+    refreshPlatformSettings();
+  }, [refreshPlatformSettings]);
+
+  const handleToggleKycRequirement = async () => {
+    try {
+      setTogglingPolicy(true);
+      const nextVal = !platformSettings.requireKycToTrade;
+      const token = localStorage.getItem('nextrade_token');
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        credentials: 'include',
+        body: JSON.stringify({ requireKycToTrade: nextVal })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        await refreshPlatformSettings();
+        addToast({
+          type: nextVal ? 'warning' : 'success',
+          title: `KYC Before Trading: ${nextVal ? 'ON (MANDATORY)' : 'OFF (OPTIONAL)'}`,
+          message: nextVal
+            ? 'New & unverified traders must now pass KYC approval before placing trades.'
+            : 'Traders can now place demo trades without waiting for KYC approval.'
+        });
+      }
+    } catch {
+      addToast({ type: 'error', title: 'Error', message: 'Failed to update KYC requirement setting.' });
+    } finally {
+      setTogglingPolicy(false);
+    }
+  };
 
   const handleReviewKyc = async (
     userId: string,
@@ -362,14 +400,39 @@ export const KycManagementPage: React.FC = () => {
   );
   const approvedUsers = users.filter((u) => u.kycStatus === 'APPROVED' && u.role === 'USER');
 
+  const kycRequired = platformSettings.requireKycToTrade;
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[#151F30] border border-slate-800 rounded-xl p-4 sm:p-5">
         <div>
-          <h2 className="text-xl font-bold text-white">KYC Document Verification &amp; Live Account Onboarding</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-white">KYC Document Verification &amp; Policy Control</h2>
           <p className="text-xs text-slate-400 mt-1">
-            Approve, reject, or request additional documents. Approving KYC activates the user's Live Account ledger for Add Funds.
+            Inspect NID Front &amp; Back photos submitted by traders, approve/reject KYC, and toggle mandatory KYC before trading.
           </p>
+        </div>
+
+        {/* One-Click KYC Before Trading ON / OFF Switch */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+          <div className="px-3 py-2 rounded-lg bg-[#0B1220] border border-slate-700 text-xs">
+            <div className="text-[10px] text-slate-400 uppercase font-semibold">Trade KYC Gate</div>
+            <div className={`font-bold font-mono ${kycRequired ? 'text-amber-400' : 'text-emerald-400'}`}>
+              {kycRequired ? 'ON · KYC Required to Trade' : 'OFF · Open Trading Allowed'}
+            </div>
+          </div>
+          <button
+            type="button"
+            disabled={togglingPolicy}
+            onClick={handleToggleKycRequirement}
+            className={`px-4 py-2.5 rounded-lg text-xs font-bold text-white transition-all flex items-center justify-center gap-2 shadow-md ${
+              kycRequired
+                ? 'bg-emerald-600 hover:bg-emerald-500'
+                : 'bg-amber-600 hover:bg-amber-500'
+            }`}
+          >
+            {kycRequired ? <ShieldOff className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
+            <span>{kycRequired ? 'Turn OFF KYC Requirement' : 'Turn ON KYC Requirement'}</span>
+          </button>
         </div>
       </div>
 
@@ -427,12 +490,73 @@ export const KycManagementPage: React.FC = () => {
                     <span className="font-bold text-white">{u.kycDocumentNumber || 'Pending'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-500 block font-sans">ATTACHED FILE</span>
-                    <span className="text-blue-400 font-bold truncate block">{u.kycDocumentFileName || 'Submitted'}</span>
+                    <span className="text-[10px] text-slate-500 block font-sans">FILES ATTACHED</span>
+                    <span className="text-blue-400 font-bold truncate block">
+                      {u.kycFrontFileName || u.kycDocumentFileName || 'Front'} / {u.kycBackFileName || 'Back'}
+                    </span>
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-500 block font-sans">PHONE</span>
                     <span className="text-slate-300">{u.phone || '—'}</span>
+                  </div>
+                </div>
+
+                {/* NID Front & Back Image Previews */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-[#0B1220] border border-slate-800 rounded-lg p-2 space-y-1.5">
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 font-semibold uppercase">
+                      <span>NID Front Side</span>
+                      {u.kycFrontImage && (
+                        <button
+                          type="button"
+                          onClick={() => setZoomImage({ label: `${u.fullName} — NID Front`, src: u.kycFrontImage })}
+                          className="text-blue-400 hover:text-white flex items-center gap-0.5"
+                        >
+                          <ZoomIn className="w-3 h-3" />
+                          <span>Zoom</span>
+                        </button>
+                      )}
+                    </div>
+                    {u.kycFrontImage ? (
+                      <img
+                        src={u.kycFrontImage}
+                        alt="NID Front"
+                        onClick={() => setZoomImage({ label: `${u.fullName} — NID Front`, src: u.kycFrontImage })}
+                        className="w-full h-28 object-cover rounded cursor-pointer border border-slate-700 hover:border-blue-500 transition-colors"
+                      />
+                    ) : (
+                      <div className="h-28 rounded border border-dashed border-slate-800 flex items-center justify-center text-[11px] text-slate-500 text-center px-2">
+                        No Front Image Uploaded
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="bg-[#0B1220] border border-slate-800 rounded-lg p-2 space-y-1.5">
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 font-semibold uppercase">
+                      <span>NID Back Side</span>
+                      {u.kycBackImage && (
+                        <button
+                          type="button"
+                          onClick={() => setZoomImage({ label: `${u.fullName} — NID Back`, src: u.kycBackImage })}
+                          className="text-blue-400 hover:text-white flex items-center gap-0.5"
+                        >
+                          <ZoomIn className="w-3 h-3" />
+                          <span>Zoom</span>
+                        </button>
+                      )}
+                    </div>
+                    {u.kycBackImage ? (
+                      <img
+                        src={u.kycBackImage}
+                        alt="NID Back"
+                        onClick={() => setZoomImage({ label: `${u.fullName} — NID Back`, src: u.kycBackImage })}
+                        className="w-full h-28 object-cover rounded cursor-pointer border border-slate-700 hover:border-blue-500 transition-colors"
+                      />
+                    ) : (
+                      <div className="h-28 rounded border border-dashed border-slate-800 flex items-center justify-center text-[11px] text-slate-500 text-center px-2">
+                        No Back Image Uploaded
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -479,48 +603,116 @@ export const KycManagementPage: React.FC = () => {
 
       {/* Verified Users Overview */}
       <div className="pt-4">
-        <h3 className="text-sm font-bold text-white mb-3">Approved Live KYC Traders ({approvedUsers.length})</h3>
+        <h3 className="text-sm font-bold text-white mb-3">Approved KYC Traders ({approvedUsers.length})</h3>
         <div className="bg-[#111827] border border-slate-800 rounded-xl overflow-hidden">
-          <table className="w-full text-left text-xs tabular-nums font-mono">
-            <thead className="bg-[#0B1220] text-slate-400 font-sans border-b border-slate-800">
-              <tr>
-                <th className="py-2.5 px-4">Trader Name</th>
-                <th className="py-2.5 px-4">Email</th>
-                <th className="py-2.5 px-4">Document Category</th>
-                <th className="py-2.5 px-4">Document ID</th>
-                <th className="py-2.5 px-4">Status</th>
-                <th className="py-2.5 px-4 text-right">Live Funding</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60 font-sans">
-              {approvedUsers.length === 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs tabular-nums font-mono min-w-[640px]">
+              <thead className="bg-[#0B1220] text-slate-400 font-sans border-b border-slate-800">
                 <tr>
-                  <td colSpan={6} className="py-6 text-center text-slate-500">
-                    No approved trader KYC profiles yet.
-                  </td>
+                  <th className="py-2.5 px-4">Trader Name</th>
+                  <th className="py-2.5 px-4">Email</th>
+                  <th className="py-2.5 px-4">Document Category</th>
+                  <th className="py-2.5 px-4">Document ID</th>
+                  <th className="py-2.5 px-4">Status</th>
+                  <th className="py-2.5 px-4 text-right">NID Photos</th>
                 </tr>
-              ) : (
-                approvedUsers.map((u) => (
-                  <tr key={u.id} className="hover:bg-[#151F30]/60">
-                    <td className="py-2.5 px-4 font-bold text-white">{u.fullName}</td>
-                    <td className="py-2.5 px-4 text-slate-300 font-mono">{u.email}</td>
-                    <td className="py-2.5 px-4 text-slate-400">{u.kycDocumentType || 'NATIONAL_ID'}</td>
-                    <td className="py-2.5 px-4 font-mono text-white">{u.kycDocumentNumber || 'Verified'}</td>
-                    <td className="py-2.5 px-4">
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">
-                        APPROVED
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-4 text-right">
-                      <span className="text-[11px] text-emerald-400 font-semibold">Live Ledger Unlocked</span>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60 font-sans">
+                {approvedUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-6 text-center text-slate-500">
+                      No approved trader KYC profiles yet.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  approvedUsers.map((u) => (
+                    <tr key={u.id} className="hover:bg-[#151F30]/60">
+                      <td className="py-2.5 px-4 font-bold text-white">{u.fullName}</td>
+                      <td className="py-2.5 px-4 text-slate-300 font-mono">{u.email}</td>
+                      <td className="py-2.5 px-4 text-slate-400">{u.kycDocumentType || 'NATIONAL_ID'}</td>
+                      <td className="py-2.5 px-4 font-mono text-white">{u.kycDocumentNumber || 'Verified'}</td>
+                      <td className="py-2.5 px-4">
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">
+                          APPROVED
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-4 text-right">
+                        {(u.kycFrontImage || u.kycBackImage) ? (
+                          <button
+                            type="button"
+                            onClick={() => setPreviewDocUser(u)}
+                            className="px-2.5 py-1 rounded bg-[#151F30] border border-slate-700 text-blue-400 hover:text-white text-[11px] font-semibold inline-flex items-center gap-1"
+                          >
+                            <Eye className="w-3 h-3" />
+                            <span>View NID</span>
+                          </button>
+                        ) : (
+                          <span className="text-[11px] text-emerald-400 font-semibold">Live Ledger Unlocked</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
+
+      {/* Inspect Approved User Front/Back NID Modal */}
+      {previewDocUser && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#151F30] border border-slate-700 rounded-xl max-w-2xl w-full p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-white">{previewDocUser.fullName} — NID Verification Photos</h3>
+                <div className="text-[11px] text-slate-400 font-mono">
+                  {previewDocUser.kycDocumentType} · #{previewDocUser.kycDocumentNumber}
+                </div>
+              </div>
+              <button onClick={() => setPreviewDocUser(null)} className="text-slate-400 hover:text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <span className="text-[11px] text-slate-400 font-semibold block">NID Front Side</span>
+                {previewDocUser.kycFrontImage ? (
+                  <img src={previewDocUser.kycFrontImage} alt="NID Front" className="w-full rounded-lg border border-slate-700" />
+                ) : (
+                  <div className="p-6 text-center text-xs text-slate-500 border border-slate-800 rounded-lg">Not available</div>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <span className="text-[11px] text-slate-400 font-semibold block">NID Back Side</span>
+                {previewDocUser.kycBackImage ? (
+                  <img src={previewDocUser.kycBackImage} alt="NID Back" className="w-full rounded-lg border border-slate-700" />
+                ) : (
+                  <div className="p-6 text-center text-xs text-slate-500 border border-slate-800 rounded-lg">Not available</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen Image Lightbox */}
+      {zoomImage && (
+        <div
+          onClick={() => setZoomImage(null)}
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4"
+        >
+          <div onClick={(e) => e.stopPropagation()} className="bg-[#111827] border border-slate-700 rounded-xl max-w-3xl w-full p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-white">{zoomImage.label}</span>
+              <button onClick={() => setZoomImage(null)} className="p-1 text-slate-400 hover:text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <img src={zoomImage.src} alt={zoomImage.label} className="w-full max-h-[75vh] object-contain rounded-lg bg-black" />
+          </div>
+        </div>
+      )}
 
       {/* Review Notes Modal (Replaces window.prompt) */}
       {reviewModal && (

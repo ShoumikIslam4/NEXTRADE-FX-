@@ -61,7 +61,7 @@ export const TradingAccountsPage: React.FC = () => {
               className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold transition-colors shadow-sm shadow-emerald-600/20"
             >
               <PlusCircle className="w-3.5 h-3.5" />
-              <span>Add Funds (Live Account)</span>
+              <span>Deposit</span>
             </Link>
           ) : (
             <button
@@ -79,7 +79,7 @@ export const TradingAccountsPage: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-800 pb-2">
         <button
           onClick={() => handleTabChange('demo')}
           className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 ${
@@ -353,7 +353,7 @@ export const TradingAccountsPage: React.FC = () => {
                     to="/trader/deposit"
                     className="py-2.5 px-4 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
                   >
-                    Add Funds (Live Ledger)
+                    Deposit
                   </Link>
                 ) : (
                   <Link

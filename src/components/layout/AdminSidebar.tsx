@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { PermissionCategory } from '../../types/admin';
-import { 
-  ShieldCheck, LayoutDashboard, Users, FileCheck, Layers, 
-  Activity, ListOrdered, Receipt, ArrowDownCircle, ArrowUpCircle, 
-  CreditCard, Sliders, DollarSign, Percent, Radio, 
-  Newspaper, Calendar, GraduationCap, LifeBuoy, Bell, 
-  BarChart3, Globe, UserCog, Key, ScrollText, Settings, 
-  ChevronLeft, ChevronRight, Eye
+import {
+  ShieldCheck, LayoutDashboard, Users, FileCheck, Layers,
+  Activity, ListOrdered, Receipt, ArrowDownCircle, ArrowUpCircle,
+  CreditCard, Sliders, DollarSign, Percent, Radio,
+  Newspaper, Calendar, GraduationCap, LifeBuoy, Bell,
+  BarChart3, Globe, UserCog, Key, ScrollText, Settings,
+  ChevronLeft, ChevronRight, Eye, X
 } from 'lucide-react';
 
 interface AdminNavItem {
@@ -19,7 +19,12 @@ interface AdminNavItem {
   badge?: string;
 }
 
-export const AdminSidebar: React.FC = () => {
+interface AdminSidebarProps {
+  mobileOpen?: boolean;
+  onClose?: () => void;
+}
+
+export const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen = false, onClose }) => {
   const [collapsed, setCollapsed] = useState(false);
   const { user, hasPermission } = useAuth();
 
@@ -95,96 +100,117 @@ export const AdminSidebar: React.FC = () => {
     }))
     .filter(g => g.items.length > 0);
 
+  const isCollapsedDesktop = collapsed && !mobileOpen;
+
   return (
-    <aside
-      className={`bg-[#111827] border-r border-slate-800 flex flex-col transition-all duration-300 z-30 shrink-0 ${
-        collapsed ? 'w-16' : 'w-64'
-      }`}
-    >
-      {/* Admin Brand & Header */}
-      <div className="h-14 flex items-center justify-between px-3.5 border-b border-slate-800">
-        {!collapsed && (
-          <Link to="/admin" className="flex items-center gap-2 font-bold text-white tracking-wide">
-            <div className="w-7 h-7 rounded bg-amber-600 flex items-center justify-center text-white shrink-0">
+    <>
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-xs z-40 lg:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 lg:static bg-[#111827] border-r border-slate-800 flex flex-col transition-all duration-300 shrink-0 ${
+          mobileOpen ? 'translate-x-0 w-72 shadow-2xl' : '-translate-x-full lg:translate-x-0'
+        } ${isCollapsedDesktop ? 'lg:w-16' : 'lg:w-64'}`}
+      >
+        {/* Admin Brand & Header */}
+        <div className="h-14 flex items-center justify-between px-3.5 border-b border-slate-800">
+          {!isCollapsedDesktop && (
+            <Link to="/admin" onClick={onClose} className="flex items-center gap-2 font-bold text-white tracking-wide">
+              <div className="w-7 h-7 rounded bg-amber-600 flex items-center justify-center text-white shrink-0">
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-black tracking-wider text-white">NEXTRADE <span className="text-amber-400">ADMIN</span></div>
+                <div className="text-[9px] text-slate-500 font-mono">BACK-OFFICE SUITE</div>
+              </div>
+            </Link>
+          )}
+
+          {isCollapsedDesktop && (
+            <div className="mx-auto w-7 h-7 rounded bg-amber-600 flex items-center justify-center text-white">
               <ShieldCheck className="w-4 h-4" />
             </div>
-            <div>
-              <div className="text-xs font-black tracking-wider text-white">NEXTRADE <span className="text-amber-400">ADMIN</span></div>
-              <div className="text-[9px] text-slate-500 font-mono">BACK-OFFICE SUITE</div>
-            </div>
-          </Link>
-        )}
+          )}
 
-        {collapsed && (
-          <div className="mx-auto w-7 h-7 rounded bg-amber-600 flex items-center justify-center text-white">
-            <ShieldCheck className="w-4 h-4" />
-          </div>
-        )}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="hidden lg:inline-flex p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            aria-label="Toggle Admin Sidebar"
+          >
+            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
 
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-          title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-          aria-label="Toggle Admin Sidebar"
-        >
-          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </button>
-      </div>
-
-      {/* Nav List */}
-      <div className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
-        {visibleGroups.map((group, gIdx) => (
-          <div key={gIdx} className="space-y-1">
-            {!collapsed && (
-              <div className="px-2.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-                {group.title}
-              </div>
-            )}
-            <div className="space-y-0.5">
-              {group.items.map((item, idx) => {
-                const Icon = item.icon;
-                return (
-                  <NavLink
-                    key={idx}
-                    to={item.to}
-                    className={({ isActive }) =>
-                      `flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                        isActive
-                          ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30 font-semibold'
-                          : 'text-slate-400 hover:text-white hover:bg-[#151F30]'
-                      } ${collapsed ? 'justify-center px-0' : ''}`
-                    }
-                    title={collapsed ? item.label : undefined}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
-                    {!collapsed && item.badge && (
-                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                        {item.badge}
-                      </span>
-                    )}
-                  </NavLink>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Admin Mode Footer */}
-      {!collapsed && (
-        <div className="p-3 border-t border-slate-800 bg-[#0B1220]/60">
-          <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
-            <span>Role:</span>
-            <span className="text-emerald-400 font-semibold uppercase tracking-wider font-mono text-[10px]">
-              {(user?.role || 'STAFF').replace(/_/g, ' ')}
-            </span>
-          </div>
-          <div className="text-[10px] text-slate-500 truncate">
-            {user?.staffProfile?.jobTitle || 'Role-based back-office governance.'}
-          </div>
+          <button
+            onClick={onClose}
+            className="lg:hidden p-1.5 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            aria-label="Close Admin Sidebar"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-      )}
-    </aside>
+
+        {/* Nav List */}
+        <div className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
+          {visibleGroups.map((group, gIdx) => (
+            <div key={gIdx} className="space-y-1">
+              {!isCollapsedDesktop && (
+                <div className="px-2.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                  {group.title}
+                </div>
+              )}
+              <div className="space-y-0.5">
+                {group.items.map((item, idx) => {
+                  const Icon = item.icon;
+                  return (
+                    <NavLink
+                      key={idx}
+                      to={item.to}
+                      onClick={onClose}
+                      className={({ isActive }) =>
+                        `flex items-center gap-2.5 px-2.5 py-2 lg:py-1.5 rounded-md text-xs font-medium transition-colors ${
+                          isActive
+                            ? 'bg-amber-600/20 text-amber-400 border border-amber-500/30 font-semibold'
+                            : 'text-slate-400 hover:text-white hover:bg-[#151F30]'
+                        } ${isCollapsedDesktop ? 'justify-center px-0' : ''}`
+                      }
+                      title={isCollapsedDesktop ? item.label : undefined}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      {!isCollapsedDesktop && <span className="flex-1 truncate">{item.label}</span>}
+                      {!isCollapsedDesktop && item.badge && (
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                          {item.badge}
+                        </span>
+                      )}
+                    </NavLink>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Admin Mode Footer */}
+        {!isCollapsedDesktop && (
+          <div className="p-3 border-t border-slate-800 bg-[#0B1220]/60">
+            <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+              <span>Role:</span>
+              <span className="text-emerald-400 font-semibold uppercase tracking-wider font-mono text-[10px]">
+                {(user?.role || 'STAFF').replace(/_/g, ' ')}
+              </span>
+            </div>
+            <div className="text-[10px] text-slate-500 truncate">
+              {user?.staffProfile?.jobTitle || 'Role-based back-office governance.'}
+            </div>
+          </div>
+        )}
+      </aside>
+    </>
   );
 };

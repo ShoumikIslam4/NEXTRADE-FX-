@@ -60,6 +60,18 @@ export interface RoleRecord {
   createdAt: string;
 }
 
+export interface ReferralConfig {
+  enabled: boolean;
+  referrerCommissionPercent: number;
+  referrerSignupBonusUSD: number;
+  referredDiscountPercent: number;
+}
+
+export interface PlatformSettings {
+  requireKycToTrade: boolean;
+  referralConfig: ReferralConfig;
+}
+
 export interface UserRecord {
   id: string;
   fullName: string;
@@ -74,8 +86,16 @@ export interface UserRecord {
   kycDocumentType?: string;
   kycDocumentNumber?: string;
   kycDocumentFileName?: string;
+  kycFrontFileName?: string;
+  kycBackFileName?: string;
+  kycFrontImage?: string;
+  kycBackImage?: string;
   kycSubmittedAt?: string;
   kycNotes?: string;
+  referralCode?: string;
+  referredBy?: string;
+  referralEarnings?: number;
+  referralCount?: number;
   createdAt: string;
   updatedAt: string;
   lastLoginAt?: string;
@@ -187,6 +207,7 @@ interface DatabaseSchema {
   passwordResetTokens: PasswordResetTokenRecord[];
   tradingAccounts: TradingAccountRecord[];
   bdtRatePerUSD: number;
+  platformSettings: PlatformSettings;
 }
 
 const LOCAL_DB_FILE = path.resolve(process.cwd(), 'data', 'nextrade_db.json');
@@ -205,7 +226,16 @@ class DatabaseService {
     auditLogs: [],
     passwordResetTokens: [],
     tradingAccounts: [],
-    bdtRatePerUSD: 122.50
+    bdtRatePerUSD: 122.50,
+    platformSettings: {
+      requireKycToTrade: false,
+      referralConfig: {
+        enabled: true,
+        referrerCommissionPercent: 10,
+        referrerSignupBonusUSD: 5,
+        referredDiscountPercent: 20
+      }
+    }
   };
 
   constructor() {
@@ -234,9 +264,18 @@ class DatabaseService {
           depositRequests: parsed.depositRequests || [],
           paymentMethods: parsed.paymentMethods || [],
           notifications: parsed.notifications || [],
-          bdtRatePerUSD: parsed.bdtRatePerUSD || 122.50
+          bdtRatePerUSD: parsed.bdtRatePerUSD || 122.50,
+          platformSettings: {
+            requireKycToTrade: Boolean(parsed.platformSettings?.requireKycToTrade),
+            referralConfig: {
+              enabled: parsed.platformSettings?.referralConfig?.enabled ?? true,
+              referrerCommissionPercent: Number(parsed.platformSettings?.referralConfig?.referrerCommissionPercent ?? 10),
+              referrerSignupBonusUSD: Number(parsed.platformSettings?.referralConfig?.referrerSignupBonusUSD ?? 5),
+              referredDiscountPercent: Number(parsed.platformSettings?.referralConfig?.referredDiscountPercent ?? 20)
+            }
+          }
         };
-        // Normalize users to have kycStatus if missing
+        // Normalize users to have kycStatus and referralCode if missing
         this.data.users.forEach(u => {
           if (!u.kycStatus) {
             u.kycStatus = u.role === 'SUPER_ADMIN' ? 'APPROVED' : 'UNSUBMITTED';
@@ -244,6 +283,11 @@ class DatabaseService {
           if (!u.phone) {
             u.phone = '+880 1712-345678';
           }
+          if (!u.referralCode) {
+            u.referralCode = this.generateReferralCode(u.fullName);
+          }
+          if (typeof u.referralEarnings !== 'number') u.referralEarnings = 0;
+          if (typeof u.referralCount !== 'number') u.referralCount = 0;
         });
       } else {
         this.bootstrap();
@@ -626,14 +670,93 @@ class DatabaseService {
     return this.data.users.map(({ passwordHash, ...rest }) => rest);
   }
 
+  private generateReferralCode(seedName?: string): string {
+    const prefix = (seedName || 'NX')
+      .replace(/[^A-Za-z]/g, '')
+      .toUpperCase()
+      .slice(0, 3)
+      .padEnd(2, 'X');
+    const rand = crypto.randomBytes(3).toString('hex').toUpperCase().slice(0, 5);
+    return `${prefix}${rand}`;
+  }
+
+  // Platform Settings (KYC Requirement Toggle & Referral Rules)
+  public getPlatformSettings(): PlatformSettings {
+    return this.data.platformSettings;
+  }
+
+  public updatePlatformSettings(updates: {
+    requireKycToTrade?: boolean;
+    referralConfig?: Partial<ReferralConfig>;
+  }): PlatformSettings {
+    if (typeof updates.requireKycToTrade === 'boolean') {
+      this.data.platformSettings.requireKycToTrade = updates.requireKycToTrade;
+    }
+    if (updates.referralConfig) {
+      this.data.platformSettings.referralConfig = {
+        enabled: updates.referralConfig.enabled ?? this.data.platformSettings.referralConfig.enabled,
+        referrerCommissionPercent: Math.max(
+          0,
+          Math.min(100, Number(updates.referralConfig.referrerCommissionPercent ?? this.data.platformSettings.referralConfig.referrerCommissionPercent))
+        ),
+        referrerSignupBonusUSD: Math.max(
+          0,
+          Number(updates.referralConfig.referrerSignupBonusUSD ?? this.data.platformSettings.referralConfig.referrerSignupBonusUSD)
+        ),
+        referredDiscountPercent: Math.max(
+          0,
+          Math.min(100, Number(updates.referralConfig.referredDiscountPercent ?? this.data.platformSettings.referralConfig.referredDiscountPercent))
+        )
+      };
+    }
+    this.save();
+    return this.data.platformSettings;
+  }
+
+  public getUserReferrals(userId: string) {
+    const user = this.findUserById(userId);
+    if (!user) return null;
+    if (!user.referralCode) {
+      user.referralCode = this.generateReferralCode(user.fullName);
+      this.save();
+    }
+    const invitedUsers = this.data.users
+      .filter(u => u.referredBy === userId)
+      .map(u => ({
+        id: u.id,
+        fullName: u.fullName,
+        email: u.email.replace(/(.{2}).+(@.+)/, '$1***$2'),
+        kycStatus: u.kycStatus,
+        createdAt: u.createdAt
+      }));
+
+    return {
+      referralCode: user.referralCode,
+      referralEarnings: user.referralEarnings || 0,
+      referralCount: invitedUsers.length,
+      invitedUsers,
+      config: this.data.platformSettings.referralConfig
+    };
+  }
+
   public createUser(userData: {
+    id?: string;
     fullName: string;
     email: string;
     passwordHash: string;
     phone?: string;
+    referralCode?: string;
+    referredByCode?: string;
+    createdAt?: string;
   }): UserRecord {
+    let referrer: UserRecord | undefined;
+    const cleanRefCode = userData.referredByCode?.trim().toUpperCase();
+    if (cleanRefCode && this.data.platformSettings.referralConfig.enabled) {
+      referrer = this.data.users.find(u => u.referralCode?.toUpperCase() === cleanRefCode);
+    }
+
     const user: UserRecord = {
-      id: 'usr_' + crypto.randomUUID(),
+      id: userData.id || 'usr_' + crypto.randomUUID(),
       fullName: userData.fullName.trim(),
       email: userData.email.toLowerCase().trim(),
       passwordHash: userData.passwordHash,
@@ -642,12 +765,37 @@ class DatabaseService {
       isActive: true,
       country: 'Bangladesh',
       phone: userData.phone || '+880 1700-000000',
-      kycStatus: 'UNSUBMITTED', // Must submit KYC to trade
-      createdAt: new Date().toISOString(),
+      kycStatus: 'UNSUBMITTED',
+      referralCode: userData.referralCode || this.generateReferralCode(userData.fullName),
+      referredBy: referrer?.id,
+      referralEarnings: 0,
+      referralCount: 0,
+      createdAt: userData.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
     this.data.users.push(user);
+
+    if (referrer) {
+      referrer.referralCount = (referrer.referralCount || 0) + 1;
+      const signupBonus = this.data.platformSettings.referralConfig.referrerSignupBonusUSD || 0;
+      if (signupBonus > 0) {
+        referrer.referralEarnings = Number(((referrer.referralEarnings || 0) + signupBonus).toFixed(2));
+        this.addNotification(
+          referrer.id,
+          `Referral Bonus Earned (+$${signupBonus.toFixed(2)})`,
+          `${user.fullName} signed up using your referral code (${referrer.referralCode}). You earned $${signupBonus.toFixed(2)} referral bonus.`,
+          'SYSTEM'
+        );
+      } else {
+        this.addNotification(
+          referrer.id,
+          'New Referral Registered',
+          `${user.fullName} joined NEXTRADE FX using your referral code (${referrer.referralCode}).`,
+          'SYSTEM'
+        );
+      }
+    }
 
     // Initial demo trading account ($1,000 USD virtual balance)
     const accNum = 'NX-DEMO-' + Math.floor(100000 + Math.random() * 900000);
@@ -676,6 +824,70 @@ class DatabaseService {
     return user;
   }
 
+  // Rehydrate a user in a fresh serverless container from verified token or encrypted checkpoint
+  public rehydrateUserFromSignedData(data: {
+    id: string;
+    fullName: string;
+    email: string;
+    passwordHash?: string;
+    role?: string;
+    kycStatus?: UserRecord['kycStatus'];
+    country?: string;
+    phone?: string;
+    referralCode?: string;
+    createdAt?: string;
+  }): UserRecord {
+    const existing = this.findUserByEmail(data.email) || this.findUserById(data.id);
+    if (existing) return existing;
+
+    const user: UserRecord = {
+      id: data.id,
+      fullName: data.fullName,
+      email: data.email.toLowerCase().trim(),
+      passwordHash: data.passwordHash || bcrypt.hashSync(crypto.randomBytes(16).toString('hex'), 8),
+      role: (data.role as any) || 'USER',
+      isEmailVerified: true,
+      isActive: true,
+      country: data.country || 'Bangladesh',
+      phone: data.phone || '+880 1700-000000',
+      kycStatus: data.kycStatus || 'UNSUBMITTED',
+      referralCode: data.referralCode || this.generateReferralCode(data.fullName),
+      referralEarnings: 0,
+      referralCount: 0,
+      createdAt: data.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    this.data.users.push(user);
+
+    const hasDemo = this.data.tradingAccounts.some(a => a.userId === user.id && a.mode === 'DEMO');
+    if (!hasDemo) {
+      this.data.tradingAccounts.push({
+        id: 'acc_' + crypto.randomUUID(),
+        userId: user.id,
+        accountNumber: 'NX-DEMO-' + Math.floor(100000 + Math.random() * 900000),
+        mode: 'DEMO',
+        type: 'Raw ECN Demo',
+        server: 'NEXTRADE-Demo-01',
+        leverage: '1:500',
+        currency: 'USD',
+        initialBalance: 1000.0,
+        balance: 1000.0,
+        equity: 1000.0,
+        margin: 0.0,
+        freeMargin: 1000.0,
+        marginLevel: 0.0,
+        floatingProfit: 0.0,
+        isPrimary: true,
+        status: 'ACTIVE',
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    this.save();
+    return user;
+  }
+
   public updateUser(id: string, updates: Partial<UserRecord>): UserRecord | undefined {
     const user = this.data.users.find(u => u.id === id);
     if (!user) return undefined;
@@ -693,11 +905,15 @@ class DatabaseService {
     return user;
   }
 
-  // KYC Submission & Review
+  // KYC Submission & Review (Supports Front & Back NID Images)
   public submitKyc(userId: string, data: {
     documentType: string;
     documentNumber: string;
     fileName?: string;
+    frontFileName?: string;
+    backFileName?: string;
+    frontImage?: string;
+    backImage?: string;
   }): UserRecord | undefined {
     const user = this.data.users.find(u => u.id === userId);
     if (!user) return undefined;
@@ -705,7 +921,11 @@ class DatabaseService {
     user.kycStatus = 'PENDING';
     user.kycDocumentType = data.documentType;
     user.kycDocumentNumber = data.documentNumber;
-    user.kycDocumentFileName = data.fileName || 'national_id_document.pdf';
+    user.kycFrontFileName = data.frontFileName || data.fileName || 'nid_front.jpg';
+    user.kycBackFileName = data.backFileName || 'nid_back.jpg';
+    user.kycDocumentFileName = `${user.kycFrontFileName} / ${user.kycBackFileName}`;
+    if (data.frontImage) user.kycFrontImage = data.frontImage;
+    if (data.backImage) user.kycBackImage = data.backImage;
     user.kycSubmittedAt = new Date().toISOString();
     user.updatedAt = new Date().toISOString();
 
@@ -856,7 +1076,13 @@ class DatabaseService {
       throw new Error(`Minimum deposit amount is $${minUSD} USD equivalent (৳${Math.ceil(rate * minUSD)} BDT).`);
     }
 
-    const feePercent = pm?.feePercent || 0;
+    const baseFeePercent = pm?.feePercent || 0;
+    const refCfg = this.data.platformSettings.referralConfig;
+    const discountMultiplier =
+      user.referredBy && refCfg.enabled && refCfg.referredDiscountPercent > 0
+        ? Math.max(0, 1 - refCfg.referredDiscountPercent / 100)
+        : 1;
+    const feePercent = Number((baseFeePercent * discountMultiplier).toFixed(2));
     const feeBDT = Number(((data.amountBDT * feePercent) / 100).toFixed(2));
     const feeUSD = Number(((amountUSD * feePercent) / 100).toFixed(2));
     const netUSD = Number((amountUSD - feeUSD).toFixed(2));
@@ -929,6 +1155,30 @@ class DatabaseService {
         `Your ${dep.method} deposit (${dep.id}, TrxID ${dep.transactionId}) has been verified and credited to Live Account #${liveAcc.accountNumber}.`,
         'DEPOSIT'
       );
+
+      // Referral Commission Reward to Referrer
+      const refCfg = this.data.platformSettings.referralConfig;
+      if (user.referredBy && refCfg.enabled && refCfg.referrerCommissionPercent > 0) {
+        const referrer = this.findUserById(user.referredBy);
+        if (referrer) {
+          const commission = Number(((creditAmount * refCfg.referrerCommissionPercent) / 100).toFixed(2));
+          if (commission > 0) {
+            referrer.referralEarnings = Number(((referrer.referralEarnings || 0) + commission).toFixed(2));
+            const referrerLive = this.data.tradingAccounts.find(a => a.userId === referrer.id && a.mode === 'LIVE');
+            if (referrerLive && referrerLive.status === 'ACTIVE') {
+              referrerLive.balance = Number((referrerLive.balance + commission).toFixed(2));
+              referrerLive.equity = Number((referrerLive.equity + commission).toFixed(2));
+              referrerLive.freeMargin = Number((referrerLive.freeMargin + commission).toFixed(2));
+            }
+            this.addNotification(
+              referrer.id,
+              `Referral Commission Credited (+$${commission.toFixed(2)} USD)`,
+              `Earned ${refCfg.referrerCommissionPercent}% referral commission from ${user.fullName}'s approved deposit (${dep.id}).`,
+              'DEPOSIT'
+            );
+          }
+        }
+      }
     } else {
       this.addNotification(
         dep.userId,

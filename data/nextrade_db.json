@@ -12,8 +12,11 @@
       "phone": "+1 (800) 555-0199",
       "createdAt": "2026-11-12T06:40:24.414Z",
       "updatedAt": "2026-11-12T06:40:24.415Z",
-      "lastLoginAt": "2026-11-13T14:15:46.171Z",
-      "kycStatus": "APPROVED"
+      "lastLoginAt": "2026-11-13T16:16:49.505Z",
+      "kycStatus": "APPROVED",
+      "referralCode": "SUP48F6F",
+      "referralEarnings": 0,
+      "referralCount": 0
     },
     {
       "id": "usr_demo_trader_01",
@@ -28,7 +31,10 @@
       "createdAt": "2026-11-12T06:40:24.510Z",
       "updatedAt": "2026-11-12T06:40:24.510Z",
       "kycStatus": "UNSUBMITTED",
-      "lastLoginAt": "2026-11-13T14:15:46.321Z"
+      "lastLoginAt": "2026-11-13T14:15:46.321Z",
+      "referralCode": "ALEE293A",
+      "referralEarnings": 0,
+      "referralCount": 0
     },
     {
       "id": "usr_d75f91b0-470f-44fc-a899-b0a783f641ef",
@@ -42,7 +48,10 @@
       "createdAt": "2026-11-12T06:40:37.118Z",
       "updatedAt": "2026-11-12T06:40:37.118Z",
       "kycStatus": "UNSUBMITTED",
-      "phone": "+880 1712-345678"
+      "phone": "+880 1712-345678",
+      "referralCode": "ROB0536D",
+      "referralEarnings": 0,
+      "referralCount": 0
     },
     {
       "id": "usr_superadmin_02",
@@ -57,7 +66,10 @@
       "createdAt": "2026-11-12T06:40:24.414Z",
       "updatedAt": "2026-11-12T06:40:24.415Z",
       "lastLoginAt": "2026-11-12T07:04:46.996Z",
-      "kycStatus": "APPROVED"
+      "kycStatus": "APPROVED",
+      "referralCode": "SUP21E53",
+      "referralEarnings": 0,
+      "referralCount": 0
     },
     {
       "id": "usr_stf_002",
@@ -72,7 +84,10 @@
       "kycStatus": "APPROVED",
       "createdAt": "2026-02-15T09:30:00Z",
       "updatedAt": "2026-11-13T14:15:38.582Z",
-      "lastLoginAt": "2026-11-13T14:15:45.664Z"
+      "lastLoginAt": "2026-11-13T14:15:45.664Z",
+      "referralCode": "TARD0620",
+      "referralEarnings": 0,
+      "referralCount": 0
     },
     {
       "id": "usr_stf_003",
@@ -86,7 +101,10 @@
       "phone": "+880 1912-334455",
       "kycStatus": "APPROVED",
       "createdAt": "2026-03-01T10:00:00Z",
-      "updatedAt": "2026-11-13T14:15:38.583Z"
+      "updatedAt": "2026-11-13T14:15:38.583Z",
+      "referralCode": "ANI7AA77",
+      "referralEarnings": 0,
+      "referralCount": 0
     },
     {
       "id": "usr_stf_004",
@@ -100,7 +118,10 @@
       "phone": "+880 1610-887766",
       "kycStatus": "APPROVED",
       "createdAt": "2026-03-12T11:00:00Z",
-      "updatedAt": "2026-11-13T14:15:38.583Z"
+      "updatedAt": "2026-11-13T14:15:38.583Z",
+      "referralCode": "FAR9275A",
+      "referralEarnings": 0,
+      "referralCount": 0
     },
     {
       "id": "usr_stf_005",
@@ -114,7 +135,10 @@
       "phone": "+880 1722-112233",
       "kycStatus": "APPROVED",
       "createdAt": "2026-04-05T08:00:00Z",
-      "updatedAt": "2026-11-13T14:15:38.583Z"
+      "updatedAt": "2026-11-13T14:15:38.583Z",
+      "referralCode": "SAD4C053",
+      "referralEarnings": 0,
+      "referralCount": 0
     },
     {
       "id": "usr_stf_006",
@@ -128,7 +152,10 @@
       "phone": "+880 1833-445566",
       "kycStatus": "APPROVED",
       "createdAt": "2026-05-18T12:00:00Z",
-      "updatedAt": "2026-11-13T14:15:38.583Z"
+      "updatedAt": "2026-11-13T14:15:38.583Z",
+      "referralCode": "KAME927F",
+      "referralEarnings": 0,
+      "referralCount": 0
     },
     {
       "id": "usr_c7290665-b13a-4aa0-8326-fd15b6a60ad3",
@@ -142,7 +169,10 @@
       "phone": "+880 1712-000000",
       "kycStatus": "UNSUBMITTED",
       "createdAt": "2026-11-13T14:45:35.455Z",
-      "updatedAt": "2026-11-13T14:45:35.455Z"
+      "updatedAt": "2026-11-13T14:45:35.455Z",
+      "referralCode": "MDSFA779",
+      "referralEarnings": 0,
+      "referralCount": 0
     },
     {
       "id": "usr_6857066b-3f90-4438-a826-7642097af9f7",
@@ -156,7 +186,54 @@
       "phone": "+880 1712-000000",
       "kycStatus": "UNSUBMITTED",
       "createdAt": "2026-11-13T14:48:25.280Z",
-      "updatedAt": "2026-11-13T14:48:25.280Z"
+      "updatedAt": "2026-11-13T14:48:25.280Z",
+      "referralCode": "MDSA3346",
+      "referralEarnings": 0,
+      "referralCount": 0
+    },
+    {
+      "id": "usr_c576ddaf-4c84-4627-98a6-1f4a07f22008",
+      "fullName": "Referrer Test",
+      "email": "refa_1794586562490@gmail.com",
+      "passwordHash": "$2b$10$XMPqZ9aPucspgPXofK5w6uEFJwgzxR3LTXHxSkyqg.t./Yn2Y.ek6",
+      "role": "USER",
+      "isEmailVerified": true,
+      "isActive": true,
+      "country": "Bangladesh",
+      "phone": "+8801711112222",
+      "kycStatus": "UNSUBMITTED",
+      "referralCode": "REF10DD7",
+      "referralEarnings": 5,
+      "referralCount": 1,
+      "createdAt": "2026-11-13T16:16:02.626Z",
+      "updatedAt": "2026-11-13T16:16:02.626Z"
+    },
+    {
+      "id": "usr_6e12dab1-4e5b-4800-bcb1-ae13ad7de33b",
+      "fullName": "Trader B",
+      "email": "refb_1794586562630@gmail.com",
+      "passwordHash": "$2b$10$vmJR0UZo4.6jQ8kIckkz.ubyW16H57pfpVlaIumDVbgRHa4SqiBJO",
+      "role": "USER",
+      "isEmailVerified": true,
+      "isActive": true,
+      "country": "Bangladesh",
+      "phone": "+880 1712-000000",
+      "kycStatus": "PENDING",
+      "referralCode": "TRA12944",
+      "referredBy": "usr_c576ddaf-4c84-4627-98a6-1f4a07f22008",
+      "referralEarnings": 0,
+      "referralCount": 0,
+      "createdAt": "2026-11-13T16:16:02.756Z",
+      "updatedAt": "2026-11-13T16:16:02.910Z",
+      "lastLoginAt": "2026-11-13T16:16:02.901Z",
+      "kycDocumentType": "NID",
+      "kycDocumentNumber": "1999123456789",
+      "kycFrontFileName": "nid_front.png",
+      "kycBackFileName": "nid_back.png",
+      "kycDocumentFileName": "nid_front.png / nid_back.png",
+      "kycFrontImage": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+      "kycBackImage": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+      "kycSubmittedAt": "2026-11-13T16:16:02.910Z"
     }
   ],
   "staff": [
@@ -191,9 +268,9 @@
         "Security",
         "Audit Logs"
       ],
-      "lastLogin": "2026-11-13T14:15:46.172Z",
+      "lastLogin": "2026-11-13T16:16:49.507Z",
       "createdAt": "2026-01-10T08:00:00Z",
-      "updatedAt": "2026-11-13T14:15:46.172Z"
+      "updatedAt": "2026-11-13T16:16:49.507Z"
     },
     {
       "id": "stf_002",
@@ -467,6 +544,46 @@
       "createdAt": "2026-11-13T14:48:25.281Z",
       "ipAddress": "127.0.0.1",
       "userAgent": "node"
+    },
+    {
+      "id": "dbc79116c23e95da4756840138adce5388553e055ecd624d5f885e01aae40ec2",
+      "userId": "usr_superadmin_01",
+      "expiresAt": 1797178562456,
+      "createdAt": "2026-11-13T16:16:02.456Z",
+      "ipAddress": "127.0.0.1",
+      "userAgent": "node"
+    },
+    {
+      "id": "257967d785e8922627599251e7538f3ffdbe290a4f09ebd0f9b196d3a3be9dd9",
+      "userId": "usr_c576ddaf-4c84-4627-98a6-1f4a07f22008",
+      "expiresAt": 1797178562626,
+      "createdAt": "2026-11-13T16:16:02.626Z",
+      "ipAddress": "127.0.0.1",
+      "userAgent": "node"
+    },
+    {
+      "id": "0663ed0417c7707dbdf05631b69898f567b8a624072f496e6f9418fc8fefe9b5",
+      "userId": "usr_6e12dab1-4e5b-4800-bcb1-ae13ad7de33b",
+      "expiresAt": 1797178562756,
+      "createdAt": "2026-11-13T16:16:02.756Z",
+      "ipAddress": "127.0.0.1",
+      "userAgent": "node"
+    },
+    {
+      "id": "9573fe4ac12d5df0b2ae21444651a7df3a926e71ef1c36e3309c95eccfefd683",
+      "userId": "usr_6e12dab1-4e5b-4800-bcb1-ae13ad7de33b",
+      "expiresAt": 1797178562900,
+      "createdAt": "2026-11-13T16:16:02.901Z",
+      "ipAddress": "127.0.0.1",
+      "userAgent": "node"
+    },
+    {
+      "id": "1c0396250c35753ea281ec32934f9c92e1d7d6e680ebead0483a4e9ecf0cc473",
+      "userId": "usr_superadmin_01",
+      "expiresAt": 1797178609504,
+      "createdAt": "2026-11-13T16:16:49.504Z",
+      "ipAddress": "127.0.0.1",
+      "userAgent": "node"
     }
   ],
   "depositRequests": [],
@@ -505,8 +622,105 @@
       "updatedAt": "2026-11-13T14:13:47.185Z"
     }
   ],
-  "notifications": [],
+  "notifications": [
+    {
+      "id": "ntf_15c793d7",
+      "userId": "usr_superadmin_01",
+      "title": "New Sign-In Security Notification",
+      "message": "Signed in to info.soumik@gmail.com at 11/13/2026, 4:16:49 PM (IP: 127.0.0.1).",
+      "category": "SYSTEM",
+      "read": false,
+      "createdAt": "2026-11-13T16:16:49.506Z"
+    },
+    {
+      "id": "ntf_33fba6cf",
+      "userId": "usr_6e12dab1-4e5b-4800-bcb1-ae13ad7de33b",
+      "title": "Trade Closed — PROFIT (+$45.20)",
+      "message": "EUR/USD BUY 0.50 lots closed in profit.",
+      "category": "TRADING",
+      "read": false,
+      "createdAt": "2026-11-13T16:16:02.945Z"
+    },
+    {
+      "id": "ntf_a321e071",
+      "userId": "usr_6e12dab1-4e5b-4800-bcb1-ae13ad7de33b",
+      "title": "New Sign-In Security Notification",
+      "message": "Signed in to refb_1794586562630@gmail.com at 11/13/2026, 4:16:02 PM (IP: 127.0.0.1).",
+      "category": "SYSTEM",
+      "read": false,
+      "createdAt": "2026-11-13T16:16:02.902Z"
+    },
+    {
+      "id": "ntf_a6bffa9f",
+      "userId": "usr_6e12dab1-4e5b-4800-bcb1-ae13ad7de33b",
+      "title": "Welcome & Account Sign-In Alert",
+      "message": "Your account (refb_1794586562630@gmail.com) was created and signed in from IP 127.0.0.1.",
+      "category": "SYSTEM",
+      "read": false,
+      "createdAt": "2026-11-13T16:16:02.757Z"
+    },
+    {
+      "id": "ntf_53ea1051",
+      "userId": "usr_c576ddaf-4c84-4627-98a6-1f4a07f22008",
+      "title": "Referral Bonus Earned (+$5.00)",
+      "message": "Trader B signed up using your referral code (REF10DD7). You earned $5.00 referral bonus.",
+      "category": "SYSTEM",
+      "read": false,
+      "createdAt": "2026-11-13T16:16:02.756Z"
+    },
+    {
+      "id": "ntf_8874034a",
+      "userId": "usr_c576ddaf-4c84-4627-98a6-1f4a07f22008",
+      "title": "Welcome & Account Sign-In Alert",
+      "message": "Your account (refa_1794586562490@gmail.com) was created and signed in from IP 127.0.0.1.",
+      "category": "SYSTEM",
+      "read": false,
+      "createdAt": "2026-11-13T16:16:02.627Z"
+    },
+    {
+      "id": "ntf_8601d566",
+      "userId": "usr_superadmin_01",
+      "title": "New Sign-In Security Notification",
+      "message": "Signed in to info.soumik@gmail.com at 11/13/2026, 4:16:02 PM (IP: 127.0.0.1).",
+      "category": "SYSTEM",
+      "read": false,
+      "createdAt": "2026-11-13T16:16:02.460Z"
+    }
+  ],
   "auditLogs": [
+    {
+      "id": "log_dcc5ba95-33e5-414e-94f8-58a5ade5d3fb",
+      "actorId": "usr_superadmin_01",
+      "actorEmail": "info.soumik@gmail.com",
+      "actorRole": "SUPER_ADMIN",
+      "action": "PLATFORM_SETTINGS_UPDATED",
+      "resource": "PlatformSettings",
+      "details": "KYC Required to Trade: OFF; Referral Enabled: true, Commission: 10%, Signup Bonus: $5, Discount: 20%",
+      "ipAddress": "127.0.0.1",
+      "timestamp": "2026-11-13T16:16:02.939Z"
+    },
+    {
+      "id": "log_0a08ce1e-567d-433d-abf9-e5d553b52370",
+      "actorId": "usr_superadmin_01",
+      "actorEmail": "info.soumik@gmail.com",
+      "actorRole": "SUPER_ADMIN",
+      "action": "PLATFORM_SETTINGS_UPDATED",
+      "resource": "PlatformSettings",
+      "details": "KYC Required to Trade: ON; Referral Enabled: true, Commission: 15%, Signup Bonus: $10, Discount: 25%",
+      "ipAddress": "127.0.0.1",
+      "timestamp": "2026-11-13T16:16:02.923Z"
+    },
+    {
+      "id": "log_988e2519-c8f6-4284-8a94-8768114947ce",
+      "actorId": "usr_6e12dab1-4e5b-4800-bcb1-ae13ad7de33b",
+      "actorEmail": "refb_1794586562630@gmail.com",
+      "actorRole": "USER",
+      "action": "KYC_SUBMITTED",
+      "resource": "UserKYC",
+      "details": "User submitted NID #1999123456789 (Front & Back images) for compliance review.",
+      "ipAddress": "127.0.0.1",
+      "timestamp": "2026-11-13T16:16:02.911Z"
+    },
     {
       "id": "log_a7c9f5c1-dfa7-4fba-a01b-48f0d513ad0a",
       "actorId": "usr_stf_002",
@@ -677,7 +891,56 @@
       "isPrimary": true,
       "status": "ACTIVE",
       "createdAt": "2026-11-13T14:48:25.280Z"
+    },
+    {
+      "id": "acc_1c69333a-6977-4ffe-b485-f86f81451cad",
+      "userId": "usr_c576ddaf-4c84-4627-98a6-1f4a07f22008",
+      "accountNumber": "NX-DEMO-294800",
+      "mode": "DEMO",
+      "type": "Raw ECN Demo",
+      "server": "NEXTRADE-Demo-01",
+      "leverage": "1:500",
+      "currency": "USD",
+      "initialBalance": 1000,
+      "balance": 1000,
+      "equity": 1000,
+      "margin": 0,
+      "freeMargin": 1000,
+      "marginLevel": 0,
+      "floatingProfit": 0,
+      "isPrimary": true,
+      "status": "ACTIVE",
+      "createdAt": "2026-11-13T16:16:02.626Z"
+    },
+    {
+      "id": "acc_933cef91-ccd8-4d83-817c-f06fee49401d",
+      "userId": "usr_6e12dab1-4e5b-4800-bcb1-ae13ad7de33b",
+      "accountNumber": "NX-DEMO-595166",
+      "mode": "DEMO",
+      "type": "Raw ECN Demo",
+      "server": "NEXTRADE-Demo-01",
+      "leverage": "1:500",
+      "currency": "USD",
+      "initialBalance": 1000,
+      "balance": 1000,
+      "equity": 1000,
+      "margin": 0,
+      "freeMargin": 1000,
+      "marginLevel": 0,
+      "floatingProfit": 0,
+      "isPrimary": true,
+      "status": "ACTIVE",
+      "createdAt": "2026-11-13T16:16:02.756Z"
     }
   ],
-  "bdtRatePerUSD": 122.5
+  "bdtRatePerUSD": 122.5,
+  "platformSettings": {
+    "requireKycToTrade": false,
+    "referralConfig": {
+      "enabled": true,
+      "referrerCommissionPercent": 10,
+      "referrerSignupBonusUSD": 5,
+      "referredDiscountPercent": 20
+    }
+  }
 }

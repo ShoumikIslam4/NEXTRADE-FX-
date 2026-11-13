@@ -246,7 +246,7 @@ function saveStorage<T>(key: string, value: T): void {
 
 export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { addToast } = useToast();
-  const { user, serverTradingAccounts, refreshUser } = useAuth();
+  const { user, serverTradingAccounts, refreshUser, platformSettings, bdtRate } = useAuth();
   const userScope = user?.id || 'guest';
 
   const [pairs, setPairs] = useState<CurrencyPair[]>(INITIAL_CURRENCY_PAIRS);
@@ -452,6 +452,24 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       credentials: 'include',
       body: JSON.stringify({ balance })
     }).catch(() => {});
+  }, [user]);
+
+  const pushTradeNotification = useCallback((title: string, message: string) => {
+    if (!user) return;
+    const token = localStorage.getItem('nextrade_token');
+    fetch('/api/user/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      credentials: 'include',
+      body: JSON.stringify({ title, message, category: 'TRADING' })
+    })
+      .then(() => {
+        window.dispatchEvent(new CustomEvent('nextrade:notifications-updated'));
+      })
+      .catch(() => {});
   }, [user]);
 
   // Positions scoped strictly to active account (Demo vs Live data isolation)
@@ -663,12 +681,20 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
           });
 
           const isProfit = realized >= 0;
-          const pnlBdt = Math.round(realized * 122.50);
+          const rate = bdtRate || 122.50;
+          const pnlBdt = Math.round(realized * rate);
+          const resultLabel = isProfit ? 'TRADE WON (PROFIT)' : 'TRADE LOST (LOSS)';
+          const notifTitle = isProfit
+            ? `Trade Won: ${pos.symbol} (+$${realized.toFixed(2)})`
+            : `Trade Lost: ${pos.symbol} (-$${Math.abs(realized).toFixed(2)})`;
+          const notifMessage = `${resultLabel} (${exitCheck.reason}) on ${pos.side} ${pos.lots} lots ${pos.symbol} @ ${currentPrice}. Realized P/L: ${isProfit ? '+' : ''}$${realized.toFixed(2)} USD (${isProfit ? '+' : '-'}৳${Math.abs(pnlBdt).toLocaleString()} BDT).`;
+
           addToast({
             type: isProfit ? 'success' : 'error',
-            title: isProfit ? `🎉 ${exitCheck.reason} (+৳${pnlBdt.toLocaleString()} BDT)` : `⚠️ ${exitCheck.reason} (-৳${Math.abs(pnlBdt).toLocaleString()} BDT)`,
-            message: `Closed ${pos.side} ${pos.lots} lots ${pos.symbol} @ ${currentPrice} with ${isProfit ? '+' : ''}$${realized.toFixed(2)} USD (${isProfit ? '+' : ''}৳${pnlBdt.toLocaleString()} BDT)`
+            title: isProfit ? `Trade Won (+৳${pnlBdt.toLocaleString()} BDT)` : `Trade Lost (-৳${Math.abs(pnlBdt).toLocaleString()} BDT)`,
+            message: notifMessage
           });
+          pushTradeNotification(notifTitle, notifMessage);
         } else {
           remaining.push({
             ...pos,
@@ -700,7 +726,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       return remaining;
     });
-  }, [pairs, addToast, syncDemoBalanceToServer]);
+  }, [pairs, addToast, syncDemoBalanceToServer, pushTradeNotification, bdtRate]);
 
   // Watchlist Toggle
   const toggleWatchlist = useCallback((symbol: string) => {
@@ -717,6 +743,16 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Open Market Order
   const openMarketOrder = useCallback(({ symbol, side, lots, stopLoss, takeProfit }: PlaceOrderParams): boolean => {
+    // Admin Global KYC Policy Check
+    if (platformSettings.requireKycToTrade && user?.kycStatus !== 'APPROVED' && user?.role === 'USER') {
+      addToast({
+        type: 'warning',
+        title: 'KYC Verification Required',
+        message: 'Platform Admin currently requires approved KYC verification before placing trades. Submit your NID front & back in Verification / KYC.'
+      });
+      return false;
+    }
+
     // Phase 1 Live Execution Restriction
     if (activeAccount.mode === 'LIVE') {
       addToast({
@@ -782,10 +818,20 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       message: `${side} ${lots} Lots ${symbol} @ ${price.toFixed(pair.pipPrecision)}`
     });
     return true;
-  }, [pairs, activeAccount, activeAccountId, addToast]);
+  }, [pairs, activeAccount, activeAccountId, addToast, platformSettings.requireKycToTrade, user?.kycStatus, user?.role]);
 
   // Place Pending Order
   const placePendingOrder = useCallback(({ symbol, type, side, targetPrice, lots, stopLoss, takeProfit }: PlacePendingParams): boolean => {
+    // Admin Global KYC Policy Check
+    if (platformSettings.requireKycToTrade && user?.kycStatus !== 'APPROVED' && user?.role === 'USER') {
+      addToast({
+        type: 'warning',
+        title: 'KYC Verification Required',
+        message: 'Platform Admin currently requires approved KYC verification before placing trades. Submit your NID front & back in Verification / KYC.'
+      });
+      return false;
+    }
+
     // Phase 1 Live Execution Restriction
     if (activeAccount.mode === 'LIVE') {
       addToast({
@@ -842,7 +888,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       message: `${type} ${side} ${lots} Lots ${symbol} @ ${targetPrice.toFixed(pair.pipPrecision)}`
     });
     return true;
-  }, [pairs, activeAccount, activeAccountId, addToast]);
+  }, [pairs, activeAccount, activeAccountId, addToast, platformSettings.requireKycToTrade, user?.kycStatus, user?.role]);
 
   // Close Position Manually
   const closePosition = useCallback((id: string) => {
@@ -887,14 +933,23 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setAllHistory(prev => [historyRecord, ...prev]);
     setAllPositions(prev => prev.filter(p => p.id !== id));
 
-    const isProfit = pos.floatingProfit >= 0;
-    const pnlBdt = Math.round(pos.floatingProfit * 122.50);
+    const realized = Number((pos.floatingProfit - pos.commission).toFixed(2));
+    const isProfit = realized >= 0;
+    const rate = bdtRate || 122.50;
+    const pnlBdt = Math.round(realized * rate);
+    const resultLabel = isProfit ? 'TRADE WON (PROFIT)' : 'TRADE LOST (LOSS)';
+    const notifTitle = isProfit
+      ? `Trade Won: ${pos.symbol} (+$${realized.toFixed(2)})`
+      : `Trade Lost: ${pos.symbol} (-$${Math.abs(realized).toFixed(2)})`;
+    const notifMessage = `${resultLabel} on ${pos.side} ${pos.lots} lots ${pos.symbol} @ ${closePrice}. Realized P/L: ${isProfit ? '+' : ''}$${realized.toFixed(2)} USD (${isProfit ? '+' : '-'}৳${Math.abs(pnlBdt).toLocaleString()} BDT).`;
+
     addToast({
       type: isProfit ? 'success' : 'error',
-      title: isProfit ? `🎉 Profit Alert (+৳${pnlBdt.toLocaleString()} BDT)` : `⚠️ Loss Alert (-৳${Math.abs(pnlBdt).toLocaleString()} BDT)`,
-      message: `${isProfit ? 'Profit' : 'Loss'} of ${isProfit ? '+' : ''}$${pos.floatingProfit.toFixed(2)} USD (${isProfit ? '+' : ''}৳${pnlBdt.toLocaleString()} BDT) on ${pos.side} ${pos.lots} lots ${pos.symbol}`
+      title: isProfit ? `Trade Won (+৳${pnlBdt.toLocaleString()} BDT)` : `Trade Lost (-৳${Math.abs(pnlBdt).toLocaleString()} BDT)`,
+      message: notifMessage
     });
-  }, [allPositions, addToast, syncDemoBalanceToServer]);
+    pushTradeNotification(notifTitle, notifMessage);
+  }, [allPositions, addToast, syncDemoBalanceToServer, pushTradeNotification, bdtRate]);
 
   // Cancel Pending Order
   const cancelPendingOrder = useCallback((id: string) => {
