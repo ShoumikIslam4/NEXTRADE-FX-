@@ -602,7 +602,7 @@ export const DepositPage: React.FC = () => {
                 <input
                   type="number"
                   min={minBDT}
-                  step="50"
+                  step="1"
                   value={effectiveBDT}
                   onChange={(e) => handleBDTChange(Number(e.target.value) || 0)}
                   className="w-full bg-[#0B1220] border border-slate-700 rounded-xl pl-8 pr-14 py-2.5 text-white font-mono text-sm font-bold focus:outline-none focus:border-blue-500"
@@ -615,7 +615,7 @@ export const DepositPage: React.FC = () => {
                 <input
                   type="number"
                   min={minUSD}
-                  step="0.5"
+                  step="0.01"
                   value={inputMode === 'USD' ? amountUSDInput : grossUSD}
                   onChange={(e) => handleUSDChange(Number(e.target.value) || 0)}
                   className="w-full bg-[#0B1220] border border-slate-700 rounded-xl pl-8 pr-14 py-2.5 text-emerald-400 font-mono text-sm font-bold focus:outline-none focus:border-emerald-500"

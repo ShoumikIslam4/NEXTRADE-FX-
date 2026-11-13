@@ -32,11 +32,11 @@ export const TraderSidebar: React.FC = () => {
       ]
     },
     {
-      title: 'Funds & Finance (Demo)',
+      title: 'Live Funds & Finance',
       items: [
-        { label: 'Demo Wallet', to: '/trader/wallet', icon: Wallet },
-        { label: 'Deposit Demo', to: '/trader/deposit', icon: ArrowDownCircle },
-        { label: 'Withdraw Demo', to: '/trader/withdrawal', icon: ArrowUpCircle },
+        { label: 'Wallet Ledger', to: '/trader/wallet', icon: Wallet },
+        { label: 'Add Funds (Live)', to: '/trader/deposit', icon: ArrowDownCircle },
+        { label: 'Withdraw (Live)', to: '/trader/withdrawal', icon: ArrowUpCircle },
         { label: 'Transactions', to: '/trader/transactions', icon: Receipt },
       ]
     },
