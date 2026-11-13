@@ -1,0 +1,6 @@
+{
+  "name": "NEXTRADE FX — Institutional Simulated Trading & Asset Portal",
+  "description": "Production-grade simulated Forex and CFD trading platform with Bangladeshi MFS instant deposits (bKash, Nagad, Rocket), compliance KYC verification, real-time dealing desk, and dual-theme institutional terminal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

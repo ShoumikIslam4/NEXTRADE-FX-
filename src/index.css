@@ -1,0 +1,267 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ==========================================================================
+   NEXTRADE FX - Institutional Light Theme System
+   Designed for maximum legibility, financial clarity, and high-contrast elegance
+   ========================================================================== */
+
+html.light {
+  color-scheme: light;
+}
+
+/* 1. Global Viewport Canvas */
+html.light body,
+html.light #root {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* 2. Primary Card & Container Surfaces */
+html.light .bg-\[\#0B1220\],
+html.light .bg-\[\#111827\],
+html.light .bg-slate-950,
+html.light .bg-slate-900 {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+}
+
+/* 3. Secondary Surfaces & Inset Panels */
+html.light .bg-\[\#151F30\],
+html.light .bg-\[\#080D17\],
+html.light .bg-\[\#1F2937\],
+html.light .bg-slate-800,
+html.light .bg-slate-900\/50,
+html.light .bg-slate-900\/80,
+html.light .bg-slate-800\/50,
+html.light .bg-slate-800\/60,
+html.light .bg-\[\#0B1220\]\/50,
+html.light .bg-\[\#0B1220\]\/60 {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* 4. Headers, Navbars, Sidebars & Sticky Top Bar */
+html.light header,
+html.light header.bg-\[\#0B1220\]\/95,
+html.light header.bg-\[\#111827\],
+html.light aside,
+html.light aside.bg-\[\#111827\],
+html.light nav {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04);
+}
+
+/* 5. Dropdowns, Popovers & Floating Menus */
+html.light div.bg-\[\#151F30\].shadow-2xl,
+html.light div.bg-\[\#151F30\].shadow-xl,
+html.light div.bg-\[\#111827\].shadow-2xl {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.1) !important;
+}
+
+/* 6. Typography & Text Hierarchy */
+html.light h1,
+html.light h2,
+html.light h3,
+html.light h4,
+html.light h5,
+html.light h6 {
+  color: #0f172a !important;
+}
+
+html.light .text-slate-100,
+html.light .text-slate-200 {
+  color: #1e293b !important;
+}
+
+html.light .text-slate-300 {
+  color: #334155 !important;
+}
+
+html.light .text-slate-400 {
+  color: #64748b !important;
+}
+
+html.light .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+html.light .border-slate-800,
+html.light .border-slate-700,
+html.light .border-slate-700\/80,
+html.light .border-slate-800\/80,
+html.light .border-slate-800\/60 {
+  border-color: #e2e8f0 !important;
+}
+
+/* General text-white override for standard text blocks */
+html.light .text-white {
+  color: #0f172a;
+}
+
+/* CRITICAL: White text must ALWAYS stay pure crisp white on filled action buttons, active tags & avatars */
+html.light button.bg-blue-600,
+html.light button.bg-blue-500,
+html.light button.bg-emerald-600,
+html.light button.bg-emerald-500,
+html.light button.bg-rose-600,
+html.light button.bg-rose-500,
+html.light button.bg-amber-600,
+html.light button.bg-amber-500,
+html.light button.bg-purple-600,
+html.light a.bg-blue-600,
+html.light a.bg-blue-500,
+html.light a.bg-emerald-600,
+html.light a.bg-rose-600,
+html.light a.bg-amber-600,
+html.light .bg-blue-600,
+html.light .bg-blue-700,
+html.light .bg-emerald-600,
+html.light .bg-rose-600,
+html.light .bg-amber-600,
+html.light .bg-purple-600,
+html.light [class*="bg-gradient-to"] {
+  color: #ffffff !important;
+}
+
+html.light button.bg-blue-600 *,
+html.light button.bg-blue-500 *,
+html.light button.bg-emerald-600 *,
+html.light button.bg-rose-600 *,
+html.light button.bg-amber-600 *,
+html.light a.bg-blue-600 *,
+html.light a.bg-emerald-600 *,
+html.light a.bg-amber-600 *,
+html.light .bg-blue-600 *,
+html.light .bg-blue-700 *,
+html.light .bg-emerald-600 *,
+html.light .bg-rose-600 *,
+html.light .bg-amber-600 *,
+html.light [class*="bg-gradient-to"] *:not(button.bg-white):not(button.bg-white *) {
+  color: #ffffff !important;
+}
+
+/* Ensure Copy Button on Gradient Banner stays crisp white card with dark text */
+html.light button.bg-white,
+html.light a.bg-white {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light button.bg-white * {
+  color: #0f172a !important;
+}
+
+/* 7. Secondary / Segmented Buttons */
+html.light button.bg-\[\#151F30\] {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+html.light button.bg-\[\#151F30\]:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+html.light button.bg-slate-800 {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+/* 8. High-Contrast Badges & Status Indicators */
+html.light .bg-emerald-500\/10,
+html.light .bg-emerald-500\/20 {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+
+html.light .bg-rose-500\/10,
+html.light .bg-rose-500\/20 {
+  background-color: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+  color: #be123c !important;
+}
+
+html.light .bg-amber-500\/10,
+html.light .bg-amber-500\/20,
+html.light .bg-amber-950\/20,
+html.light .bg-amber-950\/30,
+html.light .bg-amber-950\/40 {
+  background-color: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+
+html.light .bg-blue-500\/10,
+html.light .bg-blue-500\/20,
+html.light .bg-blue-950\/20,
+html.light .bg-blue-950\/30 {
+  background-color: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+
+/* 9. Forms, Text Inputs, Textareas & Selects */
+html.light input,
+html.light select,
+html.light textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04) !important;
+}
+
+html.light input:focus,
+html.light select:focus,
+html.light textarea:focus {
+  border-color: #2563eb !important;
+  outline: 2px solid rgba(37, 99, 235, 0.15) !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* 10. Financial Tables & Ledgers */
+html.light thead,
+html.light thead.bg-\[\#0B1220\],
+html.light thead.bg-\[\#151F30\] {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light thead th {
+  color: #475569 !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light tbody tr {
+  background-color: #ffffff !important;
+  border-color: #f1f5f9 !important;
+}
+
+html.light tbody tr:hover,
+html.light tr.hover\:bg-\[\#151F30\]\/60:hover {
+  background-color: #f8fafc !important;
+}
+
+/* 11. Modal Dialogs & Backdrops */
+html.light .bg-black\/75,
+html.light .bg-black\/70,
+html.light .bg-black\/50 {
+  background-color: rgba(15, 23, 42, 0.55) !important;
+  backdrop-filter: blur(4px);
+}
+
+
