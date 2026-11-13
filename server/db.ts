@@ -189,7 +189,9 @@ interface DatabaseSchema {
   bdtRatePerUSD: number;
 }
 
-const DB_FILE = path.resolve(process.cwd(), 'data', 'nextrade_db.json');
+const LOCAL_DB_FILE = path.resolve(process.cwd(), 'data', 'nextrade_db.json');
+const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const DB_FILE = IS_SERVERLESS ? path.resolve('/tmp', 'nextrade_db.json') : LOCAL_DB_FILE;
 
 class DatabaseService {
   private data: DatabaseSchema = {
@@ -215,6 +217,10 @@ class DatabaseService {
       const dir = path.dirname(DB_FILE);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
+      }
+
+      if (IS_SERVERLESS && !fs.existsSync(DB_FILE) && fs.existsSync(LOCAL_DB_FILE)) {
+        fs.copyFileSync(LOCAL_DB_FILE, DB_FILE);
       }
 
       if (fs.existsSync(DB_FILE)) {

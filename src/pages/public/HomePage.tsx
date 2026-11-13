@@ -7,14 +7,12 @@ import {
   HelpCircle, ArrowRight, Activity, Terminal 
 } from 'lucide-react';
 import { MOCK_FAQS, MOCK_MARKET_ANALYSES, MOCK_EDUCATION_COURSES } from '../../data/mockMarketData';
+import heroImage from '../../assets/images/trading_hero_platform_1794459706047.jpg';
+import terminalPreview from '../../assets/images/institutional_terminal_preview_1794459707163.jpg';
 
 export const HomePage: React.FC = () => {
   const { pairs, setSelectedPairSymbol } = useTrading();
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
-
-  const heroImage = "/src/assets/images/trading_hero_platform_1794459706047.jpg";
-  const terminalPreview = "/src/assets/images/institutional_terminal_preview_1794459707163.jpg";
-  const analystImage = "/src/assets/images/analyst_headshot_1794459707183.jpg";
 
   return (
     <div className="space-y-24 pb-20">

@@ -6,6 +6,7 @@ import {
   ChevronRight, Mail, Phone, MapPin, Send, HelpCircle, Monitor, Smartphone, Search 
 } from 'lucide-react';
 import { MOCK_FAQS } from '../../data/mockMarketData';
+import analystImage from '../../assets/images/analyst_headshot_1794459707183.jpg';
 
 export const TradingPage: React.FC = () => {
   return (
@@ -181,8 +182,6 @@ export const AccountTypesPage: React.FC = () => {
 };
 
 export const AboutPage: React.FC = () => {
-  const analystImage = "/src/assets/images/analyst_headshot_1794459707183.jpg";
-
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 space-y-16">
       <div className="max-w-3xl space-y-4">

@@ -461,6 +461,12 @@ export const StaffManagementPage: React.FC = () => {
                           <img
                             src={s.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&q=80'}
                             alt={s.name}
+                            onError={(e) => {
+                              const img = e.currentTarget;
+                              img.onerror = null;
+                              const initials = (s.name || 'NX').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+                              img.src = `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" fill="#1e293b"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#60a5fa" font-family="sans-serif" font-size="28" font-weight="bold">${initials}</text></svg>`)}`;
+                            }}
                             className="w-8 h-8 rounded-full object-cover border border-slate-700"
                           />
                           <div>
